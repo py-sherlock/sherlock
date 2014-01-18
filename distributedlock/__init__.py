@@ -121,8 +121,8 @@ class _Configuration(object):
             return self._client
         else:
             if self.backend is None:
-                raise ValueError('Cannot create a client object when backend '
-                                 'is not configured.')
+                raise ValueError('Cannot create a default client object when '
+                                 'backend is not configured.')
             if self.backend == backends.REDIS:
                 self.client = redis.StrictRedis()
             elif self.backend == backends.ETCD:
@@ -141,7 +141,7 @@ class _Configuration(object):
                 if isinstance(val, redis.client.StrictRedis):
                     self._client = val
                 else:
-                    raise ValueError(exc_msg % (self.backend['ibrary'],
+                    raise ValueError(exc_msg % (self.backend['library'],
                                                 self.backend['name']))
             elif self.backend == backends.ETCD:
                 if isinstance(val, etcd.Client):
@@ -156,18 +156,17 @@ class _Configuration(object):
                     raise ValueError(exc_msg % (self.backend['ibrary'],
                                                 self.backend['name']))
         else:
-            if backends.REDIS['available']:
-                if isinstance(val, redis.client.StrictRedis):
-                    self._client = val
-                    self.backend = backends.REDIS
-            elif backends.ETCD['available']:
-                if isinstance(val, etcd.Client):
-                    self._client = val
-                    self.backend = backends.ETCD
-            elif backends.MEMCACHED['available']:
-                if isinstance(val, pylibmc.Client):
-                    self._client = val
-                    self.backend = backends.MEMCACHED
+            if (backends.REDIS['available'] and
+                    isinstance(val, redis.client.StrictRedis)):
+                self._client = val
+                self.backend = backends.REDIS
+            elif backends.ETCD['available'] and isinstance(val, etcd.Client):
+                self._client = val
+                self.backend = backends.ETCD
+            elif (backends.MEMCACHED['available'] and
+                    isinstance(val, pylibmc.Client)):
+                self._client = val
+                self.backend = backends.MEMCACHED
             if self._client is None:
                 raise ValueError('Either none of the backend store client '
                                  'libraries are missing or the provided '
