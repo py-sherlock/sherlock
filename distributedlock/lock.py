@@ -5,6 +5,15 @@
     A generic lock.
 '''
 
+__all__ = [
+    'LockException',
+    'LockTimeoutException',
+    'Lock',
+    'RedisLock',
+    'EtcdLock',
+    'MCLock'
+]
+
 import etcd
 import pylibmc
 import redis
@@ -35,7 +44,7 @@ class BaseLock(object):
                  namespace=None,
                  expire=60,
                  timeout=10,
-                 timeout_interval=0.1,
+                 retry_interval=0.1,
                  client=None):
         '''
         :param str lock_name: name of the lock to uniquely identify the lock
@@ -44,7 +53,7 @@ class BaseLock(object):
                               your application in order to avoid conflicts.
         :param int expire: set lock expiry time.
         :param int timeout: set timeout to acquire lock
-        :param int timeout_interval: set interval for trying acquiring lock
+        :param int retry_interval: set interval for trying acquiring lock
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         '''
@@ -53,7 +62,7 @@ class BaseLock(object):
         self.namespace = namespace
         self.expire = expire
         self.timeout = timeout
-        self.timeout_interval = timeout_interval
+        self.retry_interval = retry_interval
         self.client = None
 
     @property
@@ -96,9 +105,9 @@ class BaseLock(object):
             timeout = self.timeout
             while timeout >= 0:
                 if self._acquire() is not True:
-                    timeout -= self.timeout_interval
+                    timeout -= self.retry_interval
                     if timeout > 0:
-                        time.sleep(self.timeout_interval)
+                        time.sleep(self.retry_interval)
                 else:
                     return True
             raise LockTimeoutException('Timeout elapsed while trying to '
@@ -155,8 +164,8 @@ class RedisLock(BaseLock):
                               your application in order to avoid conflicts.
         :param int expire: set lock expiry time.
         :param int timeout: set timeout to acquire lock
-        :param int timeout_interval: set interval for trying acquiring lock
-                                     after the timeout interval has elapsed.
+        :param int retry_interval: set interval for trying acquiring lock
+                                   after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         '''
 
@@ -215,8 +224,8 @@ class EtcdLock(BaseLock):
                               your application in order to avoid conflicts.
         :param int expire: set lock expiry time.
         :param int timeout: set timeout to acquire lock
-        :param int timeout_interval: set interval for trying acquiring lock
-                                     after the timeout interval has elapsed.
+        :param int retry_interval: set interval for trying acquiring lock
+                                   after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         '''
 
@@ -281,8 +290,8 @@ class MCLock(BaseLock):
                               your application in order to avoid conflicts.
         :param int expire: set lock expiry time.
         :param int timeout: set timeout to acquire lock
-        :param int timeout_interval: set interval for trying acquiring lock
-                                     after the timeout interval has elapsed.
+        :param int retry_interval: set interval for trying acquiring lock
+                                   after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         '''
 
