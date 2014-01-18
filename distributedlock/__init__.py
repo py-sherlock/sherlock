@@ -200,3 +200,7 @@ class _Configuration(object):
 
 backends = _Backends()
 _configuration = _Configuration()
+
+
+# Import important Lock classes
+from .lock import *

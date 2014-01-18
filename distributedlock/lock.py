@@ -20,6 +20,7 @@ import redis
 import time
 import uuid
 
+from . import backends
 from . import _configuration
 
 
@@ -43,11 +44,7 @@ class BaseLock(object):
 
     def __init__(self,
                  lock_name,
-                 namespace=None,
-                 expire=60,
-                 timeout=10,
-                 retry_interval=0.1,
-                 client=None):
+                 **kwargs):
         '''
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
@@ -80,12 +77,12 @@ class BaseLock(object):
         if kwargs.get('retry_interval'):
             self.retry_interval = kwargs['retry_interval']
         else:
-            self.client = _configuration.retry_interval
+            self.retry_interval = _configuration.retry_interval
 
         if kwargs.get('client'):
             self.client = kwargs['client']
         else:
-            self.client = _configuration.client
+            self.client = None
 
     @property
     def _locked(self):
@@ -157,6 +154,64 @@ class BaseLock(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.release()
+
+
+class Lock(BaseLock):
+    '''
+    A general lock that inherits global coniguration and provides locks.
+    '''
+
+    def __init__(self, *args, **kwargs):
+        '''
+        :param str lock_name: name of the lock to uniquely identify the lock
+                              between processes.
+        :param str namespace: Optional namespace to namespace lock keys for
+                              your application in order to avoid conflicts.
+        :param int expire: set lock expiry time.
+        :param int timeout: set timeout to acquire lock
+        :param int retry_interval: set interval for trying acquiring lock
+                                   after the timeout interval has elapsed.
+        :param client: supported client object for the backend of your choice.
+        '''
+
+        super(Lock, self).__init__(*args, **kwargs)
+
+        try:
+            self.client = _configuration.client
+        except ValueError:
+            pass
+
+        if self.client is None:
+            self._lock_proxy = None
+        else:
+            if _configuration.backend == backends.REDIS:
+                self._lock_proxy = RedisLock(*args, **kwargs)
+            elif _configuration.backend == backends.ETCD:
+                self._lock_proxy = EtcdLock(*args, **kwargs)
+            if _configuration.backend == backends.MEMCACHED:
+                self._lock_proxy = MCLock(*args, **kwargs)
+
+    def _acquire(self):
+        if self._lock_proxy is None:
+            raise LockException('Lock backend has not been configured and '
+                                'lock cannot be acquired or released. '
+                                'Configure lock backend first.')
+        return self._lock_proxy.acquire()
+
+    def _release(self):
+        if self._lock_proxy is None:
+            raise LockException('Lock backend has not been configured and '
+                                'lock cannot be acquired or released. '
+                                'Configure lock backend first.')
+        return self._lock_proxy.release()
+
+    @property
+    def _locked(self):
+        if self._lock_proxy is None:
+            raise LockException('Lock backend has not been configured and '
+                                'lock cannot be acquired or released. '
+                                'Configure lock backend first.')
+        return self._lock_proxy.locked()
 
 
 class RedisLock(BaseLock):
