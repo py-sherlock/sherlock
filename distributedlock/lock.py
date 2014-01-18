@@ -9,6 +9,8 @@ import redis
 import time
 import uuid
 
+from exceptions import LockTimeoutException
+
 
 class BaseLock(object):
 
@@ -83,7 +85,8 @@ class BaseLock(object):
                         time.sleep(self.timeout_interval)
                 else:
                     return True
-            raise Exception('Timeout elapsed while trying to acquire Lock.')
+            raise LockTimeoutException('Timeout elapsed while trying to '
+                                       'acquire Lock.')
         else:
             return self._acquire()
 
