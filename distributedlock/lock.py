@@ -12,6 +12,14 @@ import time
 import uuid
 
 
+class LockException(Exception):
+    '''
+    Generic exception for Locks.
+    '''
+
+    pass
+
+
 class LockTimeoutException(Exception):
     '''
     Raised whenever timeout occurs while trying to acquire lock.
@@ -182,11 +190,11 @@ class RedisLock(BaseLock):
 
     def _release(self):
         if self._owner is None:
-            raise Exception('Lock was not set by this process.')
+            raise LockException('Lock was not set by this process.')
 
         if self._release_func(keys=[self._key_name, self._owner]) != 1:
-            raise Exception('Lock could not be released because it has not '
-                            'been acquired by this instance.')
+            raise LockException('Lock could not be released because it has '
+                                'not been acquired by this instance.')
 
         self._owner = None
 
@@ -240,7 +248,7 @@ class EtcdLock(BaseLock):
 
     def _release(self):
         if self._owner is None:
-            raise Exception('Lock was not set by this process.')
+            raise LockException('Lock was not set by this process.')
 
         try:
             resp = self.client.get(self._key_name)
@@ -248,11 +256,11 @@ class EtcdLock(BaseLock):
                 self.client.delete(self._key_name)
                 self._owner = None
             else:
-                raise Exception('Lock could not be released because it has not'
-                                ' been acquired by this instance.')
+                raise LockException('Lock could not be released because it '
+                                    'has not been acquired by this instance.')
         except KeyError:
-            raise Exception('Lock could not be released as it has not been '
-                            'acquired')
+            raise LockException('Lock could not be released as it has not '
+                                'been acquired')
 
     @property
     def _locked(self):
@@ -307,7 +315,7 @@ class MCLock(BaseLock):
 
     def _release(self):
         if self._owner is None:
-            raise Exception('Lock was not set by this process.')
+            raise LockException('Lock was not set by this process.')
 
         resp = self.client.get(self._key_name)
         if resp is not None:
@@ -315,12 +323,12 @@ class MCLock(BaseLock):
                 self.client.delete(self._key_name)
                 self._owner = None
             else:
-                raise Exception('Lock could not be released because it has not'
-                                ' been acquired by this instance.')
+                raise LockException('Lock could not be released because it '
+                                    'has not been acquired by this instance.')
         else:
-            raise Exception('Lock could not be released as it has not been '
-                            'acquired')
+            raise LockException('Lock could not be released as it has not '
+                                'been acquired')
 
     @property
     def _locked(self):
-            return True if self.client.get(self._key_name) is not None else False
+        return True if self.client.get(self._key_name) is not None else False
