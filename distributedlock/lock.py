@@ -5,11 +5,19 @@
     A generic lock.
 '''
 
+import etcd
+import pylibmc
 import redis
 import time
 import uuid
 
-from exceptions import LockTimeoutException
+
+class LockTimeoutException(Exception):
+    '''
+    Raised whenever timeout occurs while trying to acquire lock.
+    '''
+
+    pass
 
 
 class BaseLock(object):
@@ -148,6 +156,7 @@ class RedisLock(BaseLock):
 
         if self.client is None:
             self.client = redis.StrictRedis(host='localhost', port=6379, db=0)
+
         self._owner = None
 
         # Register Lua script
@@ -186,3 +195,132 @@ class RedisLock(BaseLock):
         if self.client.get(self._key_name) is None:
             return False
         return True
+
+
+class EtcdLock(BaseLock):
+
+    def __init__(self, *args, **kwargs):
+        '''
+        :param str lock_name: name of the lock to uniquely identify the lock
+                              between processes.
+        :param str namespace: Optional namespace to namespace lock keys for
+                              your application in order to avoid conflicts.
+        :param int expire: set lock expiry time.
+        :param int timeout: set timeout to acquire lock
+        :param int timeout_interval: set interval for trying acquiring lock
+                                     after the timeout interval has elapsed.
+        :param client: supported client object for the backend of your choice.
+        '''
+
+        super(EtcdLock, self).__init__(*args, **kwargs)
+
+        if self.client is None:
+            self.client = etcd.Client()
+
+        self._owner = None
+
+    @property
+    def _key_name(self):
+        if self.namespace is not None:
+            return '/%s/%s' % (self.namespace, self.lock_name)
+        else:
+            return '/%s' % self.lock_name
+
+    def _acquire(self):
+        owner = uuid.uuid4()
+
+        try:
+            self.client.get(self._key_name)
+        except KeyError:
+            self.client.set(self._key_name, owner, ttl=self.expire)
+            self._owner = owner
+            return True
+        else:
+            return False
+
+    def _release(self):
+        if self._owner is None:
+            raise Exception('Lock was not set by this process.')
+
+        try:
+            resp = self.client.get(self._key_name)
+            if resp.value == str(self._owner):
+                self.client.delete(self._key_name)
+                self._owner = None
+            else:
+                raise Exception('Lock could not be released because it has not'
+                                ' been acquired by this instance.')
+        except KeyError:
+            raise Exception('Lock could not be released as it has not been '
+                            'acquired')
+
+    @property
+    def _locked(self):
+        try:
+            self.client.get(self._key_name)
+            return True
+        except KeyError:
+            return False
+
+
+class MCLock(BaseLock):
+
+    def __init__(self, *args, **kwargs):
+        '''
+        :param str lock_name: name of the lock to uniquely identify the lock
+                              between processes.
+        :param str namespace: Optional namespace to namespace lock keys for
+                              your application in order to avoid conflicts.
+        :param int expire: set lock expiry time.
+        :param int timeout: set timeout to acquire lock
+        :param int timeout_interval: set interval for trying acquiring lock
+                                     after the timeout interval has elapsed.
+        :param client: supported client object for the backend of your choice.
+        '''
+
+        super(MCLock, self).__init__(*args, **kwargs)
+
+        if self.client is None:
+            self.client = pylibmc.Client(['localhost'],
+                                         binary=True)
+
+        self._owner = None
+
+    @property
+    def _key_name(self):
+        if self.namespace is not None:
+            key = '%s_%s' % (self.namespace, self.lock_name)
+        else:
+            key = self.lock_name
+        return key
+
+    def _acquire(self):
+        owner = uuid.uuid4()
+
+        # Set key only if it does not exist
+        if self.client.add(self._key_name, str(owner),
+                           time=self.expire) is True:
+            self._owner = owner
+            return True
+        else:
+            return False
+
+    def _release(self):
+        if self._owner is None:
+            raise Exception('Lock was not set by this process.')
+
+        resp = self.client.get(self._key_name)
+        if resp is not None:
+            if resp == str(self._owner):
+                self.client.delete(self._key_name)
+                self._owner = None
+            else:
+                raise Exception('Lock could not be released because it has not'
+                                ' been acquired by this instance.')
+        else:
+            raise Exception('Lock could not be released as it has not been '
+                            'acquired')
+
+    @property
+    def _locked(self):
+            return True if self.client.get(self._key_name) is not None else False
