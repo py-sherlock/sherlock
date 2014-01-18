@@ -161,7 +161,7 @@ class Lock(BaseLock):
     A general lock that inherits global coniguration and provides locks.
     '''
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, lock_name, **kwargs):
         '''
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
@@ -171,10 +171,17 @@ class Lock(BaseLock):
         :param int timeout: set timeout to acquire lock
         :param int retry_interval: set interval for trying acquiring lock
                                    after the timeout interval has elapsed.
-        :param client: supported client object for the backend of your choice.
+
+        .. Note:: this Lock object does not accept a custom lock backend store
+                  client object. It instead uses the global custom client
+                  object.
         '''
 
-        super(Lock, self).__init__(*args, **kwargs)
+        # Raise exception if client keyword argument is found
+        if 'client' in kwargs:
+            raise TypeError('Lock object does not accept a custom client '
+                            'object')
+        super(Lock, self).__init__(lock_name, **kwargs)
 
         try:
             self.client = _configuration.client
@@ -185,11 +192,11 @@ class Lock(BaseLock):
             self._lock_proxy = None
         else:
             if _configuration.backend == backends.REDIS:
-                self._lock_proxy = RedisLock(*args, **kwargs)
+                self._lock_proxy = RedisLock(lock_name, **kwargs)
             elif _configuration.backend == backends.ETCD:
-                self._lock_proxy = EtcdLock(*args, **kwargs)
+                self._lock_proxy = EtcdLock(lock_name, **kwargs)
             if _configuration.backend == backends.MEMCACHED:
-                self._lock_proxy = MCLock(*args, **kwargs)
+                self._lock_proxy = MCLock(lock_name, **kwargs)
 
     def _acquire(self):
         if self._lock_proxy is None:
@@ -233,7 +240,7 @@ class RedisLock(BaseLock):
     return result
     '''
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, lock_name, **kwargs):
         '''
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
@@ -246,7 +253,7 @@ class RedisLock(BaseLock):
         :param client: supported client object for the backend of your choice.
         '''
 
-        super(RedisLock, self).__init__(*args, **kwargs)
+        super(RedisLock, self).__init__(lock_name, **kwargs)
 
         if self.client is None:
             self.client = redis.StrictRedis(host='localhost', port=6379, db=0)
@@ -293,7 +300,7 @@ class RedisLock(BaseLock):
 
 class EtcdLock(BaseLock):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, lock_name, **kwargs):
         '''
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
@@ -306,7 +313,7 @@ class EtcdLock(BaseLock):
         :param client: supported client object for the backend of your choice.
         '''
 
-        super(EtcdLock, self).__init__(*args, **kwargs)
+        super(EtcdLock, self).__init__(lock_name, **kwargs)
 
         if self.client is None:
             self.client = etcd.Client()
@@ -359,7 +366,7 @@ class EtcdLock(BaseLock):
 
 class MCLock(BaseLock):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, lock_name, **kwargs):
         '''
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
@@ -372,7 +379,7 @@ class MCLock(BaseLock):
         :param client: supported client object for the backend of your choice.
         '''
 
-        super(MCLock, self).__init__(*args, **kwargs)
+        super(MCLock, self).__init__(lock_name, **kwargs)
 
         if self.client is None:
             self.client = pylibmc.Client(['localhost'],

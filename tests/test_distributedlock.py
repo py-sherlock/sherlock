@@ -1,5 +1,5 @@
 '''
-    Tests for some basic package's root level tests.
+    Tests for some basic package's root level functionality.
 '''
 
 import distributedlock
