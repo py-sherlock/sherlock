@@ -197,9 +197,11 @@ class _Configuration(object):
             setattr(self, key, val)
 
 
+# Create a backends singleton
 backends = _Backends()
-_configuration = _Configuration()
 
+# Create a configuration singleton
+_configuration = _Configuration()
 
 # Import important Lock classes
 from .lock import *

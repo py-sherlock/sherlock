@@ -21,7 +21,12 @@ setup(
     long_description=read_file('README.md'),
     platforms=('Any',),
     packages=find_packages(exclude=['tests']),
-    include_package_data = True,
+    include_package_data=True,
+    install_requires=[
+        'redis',
+        'etcd',
+        'pylibmc',
+    ],
     zip_safe = False,
     classifiers = [
         'Development Status :: 5 - Production/Stable',
