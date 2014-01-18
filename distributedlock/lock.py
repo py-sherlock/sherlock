@@ -20,6 +20,8 @@ import redis
 import time
 import uuid
 
+from . import _configuration
+
 
 class LockException(Exception):
     '''
@@ -59,11 +61,31 @@ class BaseLock(object):
         '''
 
         self.lock_name = lock_name
-        self.namespace = namespace
-        self.expire = expire
-        self.timeout = timeout
-        self.retry_interval = retry_interval
-        self.client = None
+
+        if kwargs.get('namespace'):
+            self.namespace = kwargs['namespace']
+        else:
+            self.namespace = _configuration.namespace
+
+        if kwargs.get('expire'):
+            self.expire = kwargs['expire']
+        else:
+            self.expire = _configuration.expire
+
+        if kwargs.get('timeout'):
+            self.timeout = kwargs['timeout']
+        else:
+            self.timeout = _configuration.timeout
+
+        if kwargs.get('retry_interval'):
+            self.retry_interval = kwargs['retry_interval']
+        else:
+            self.client = _configuration.retry_interval
+
+        if kwargs.get('client'):
+            self.client = kwargs['client']
+        else:
+            self.client = _configuration.client
 
     @property
     def _locked(self):
