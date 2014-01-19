@@ -25,8 +25,11 @@ setup(
     include_package_data=True,
     install_requires=[
         'redis',
-        'etcd',
+        'python-etcd',
         'pylibmc',
+    ],
+    dependency_links=[
+        'http://github.com/jplana/python-etcd/tarball/master#egg=python-etcd-0.3.0',
     ],
     zip_safe = False,
     classifiers = [
@@ -38,6 +41,5 @@ setup(
     tests_require=[
         'nose',
         'mock',
-        'datadiff',
     ]
 )
