@@ -11,6 +11,11 @@ __version__ = '.'.join(map(str, (0, 0, 0)))
 __author__ = 'Vaidik Kapoor'
 
 
+import etcd
+import pylibmc
+import redis
+
+
 class _Backends(object):
     '''
     A simple object that provides a list of available backends.
@@ -19,17 +24,14 @@ class _Backends(object):
     REDIS = {
         'name': 'REDIS',
         'library': 'redis',
-        'available': False,
     }
     ETCD = {
         'name': 'ETCD',
         'library': 'etcd',
-        'available': False,
     }
     MEMCACHED = {
         'name': 'MEMCACHED',
         'library': 'pylibmc',
-        'available': False,
     }
 
     @property
@@ -41,26 +43,6 @@ class _Backends(object):
         return (self.REDIS,
                 self.ETCD,
                 self.MEMCACHED)
-
-
-try:
-    import etcd
-    _Backends.ETCD['available'] = True
-except ImportError:
-    pass
-
-try:
-    import pylibmc
-    _Backends.MEMCACHED['available'] = True
-except ImportError:
-    pass
-
-
-try:
-    import redis
-    _Backends.REDIS['available'] = True
-except ImportError:
-    pass
 
 
 def configure(**kwargs):
@@ -108,11 +90,6 @@ class _Configuration(object):
                              'backends.REDIS, backends.ETCD and '
                              'backends.MEMCACHED.')
 
-        if not val['available']:
-            raise ImportError('%s library is not available and hence %s '
-                              'can\'t be used as backend.' % (val['library'],
-                                                              val['name']))
-
         self._backend = val
 
     @property
@@ -134,6 +111,7 @@ class _Configuration(object):
 
     @client.setter
     def client(self, val):
+        # When backend is set, check client type
         if self.backend is not None:
             exc_msg = ('Only a client of the %s library can be used '
                        'when using %s as the backend store option.')
@@ -156,21 +134,21 @@ class _Configuration(object):
                     raise ValueError(exc_msg % (self.backend['ibrary'],
                                                 self.backend['name']))
         else:
-            if (backends.REDIS['available'] and
-                    isinstance(val, redis.client.StrictRedis)):
+            if isinstance(val, redis.client.StrictRedis):
                 self._client = val
                 self.backend = backends.REDIS
-            elif backends.ETCD['available'] and isinstance(val, etcd.Client):
+            elif isinstance(val, etcd.Client):
                 self._client = val
                 self.backend = backends.ETCD
-            elif (backends.MEMCACHED['available'] and
-                    isinstance(val, pylibmc.Client)):
+            elif isinstance(val, pylibmc.Client):
                 self._client = val
                 self.backend = backends.MEMCACHED
             if self._client is None:
-                raise ValueError('Either none of the backend store client '
-                                 'libraries are missing or the provided '
-                                 'object is unacceptable.')
+                raise ValueError('The provided object is not a valid client'
+                                 'object. Client objects can only be '
+                                 'instances of redis library\'s client class,'
+                                 'python-etcd library\'s client class or '
+                                 'pylibmc library\'s client class.')
 
     def update(self, **kwargs):
         '''

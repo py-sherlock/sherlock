@@ -14,6 +14,9 @@ __all__ = [
     'MCLock'
 ]
 
+import etcd
+import pylibmc
+import redis
 import time
 import uuid
 
@@ -253,7 +256,6 @@ class RedisLock(BaseLock):
         super(RedisLock, self).__init__(lock_name, **kwargs)
 
         if self.client is None:
-            import redis
             self.client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
         self._owner = None
@@ -314,7 +316,6 @@ class EtcdLock(BaseLock):
         super(EtcdLock, self).__init__(lock_name, **kwargs)
 
         if self.client is None:
-            import etcd
             self.client = etcd.Client()
 
         self._owner = None
@@ -381,7 +382,6 @@ class MCLock(BaseLock):
         super(MCLock, self).__init__(lock_name, **kwargs)
 
         if self.client is None:
-            import pylibmc
             self.client = pylibmc.Client(['localhost'],
                                          binary=True)
 

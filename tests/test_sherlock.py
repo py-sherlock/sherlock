@@ -44,14 +44,6 @@ class TestConfiguration(unittest.TestCase):
             self.configure.backend = 0
         self.assertRaises(ValueError, _test)
 
-    def test_backend_raises_import_error_when_library_not_available(self):
-        sherlock.backends.REDIS['available'] = False
-        def _test():
-            self.configure.backend = sherlock.backends.REDIS
-
-        self.assertRaises(ImportError, _test)
-        sherlock.backends.REDIS['available'] = True
-
     def test_backend_sets_backend_value(self):
         self.configure.backend = sherlock.backends.REDIS
         self.assertEqual(self.configure._backend,
@@ -115,20 +107,6 @@ class TestConfiguration(unittest.TestCase):
         self.assertEquals(self.configure.backend, None)
         client_obj = Mock()
         self.configure.client = client_obj
-
-        # When backend is not set and client libraries are not available
-        self.configure._backend = None
-        self.configure._client = None
-        self.assertEquals(self.configure.backend, None)
-        sherlock.backends.REDIS['available'] = False
-        sherlock.backends.MEMCACHED['available'] = False
-        sherlock.backends.ETCD['available'] = False
-        def _test():
-            self.configure.client = Mock()
-        self.assertRaises(ValueError, _test)
-        sherlock.backends.REDIS['available'] = True
-        sherlock.backends.MEMCACHED['available'] = True
-        sherlock.backends.ETCD['available'] = True
 
 
 def testConfigure():
