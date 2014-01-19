@@ -6,11 +6,6 @@
     different machines.
 '''
 
-__title__ = 'sherlock'
-__version__ = '.'.join(map(str, (0, 0, 0)))
-__author__ = 'Vaidik Kapoor'
-
-
 import etcd
 import pylibmc
 import redis

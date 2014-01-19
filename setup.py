@@ -5,8 +5,9 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-from sherlock import __version__
-
+__title__ = 'sherlock'
+__version__ = '.'.join(map(str, (0, 0, 0)))
+__author__ = 'Vaidik Kapoor'
 
 # read contents of a file
 read_file = lambda x: open(x, 'r').read()
