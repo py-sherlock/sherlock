@@ -18,6 +18,7 @@ class TestBaseLock(unittest.TestCase):
 
     def test_init_does_not_use_global_default_for_client_obj(self):
         client_obj = Mock()
+        sherlock.redis.client.StrictRedis = Mock
         sherlock.configure(client=client_obj)
         lock = sherlock.lock.BaseLock('lockname')
         self.assertNotEqual(lock.client, client_obj)
@@ -94,6 +95,8 @@ class TestLock(unittest.TestCase):
                                    sherlock.RedisLock))
 
     def test_lock_uses_proxys_methods(self):
+        sherlock.redis.StrictRedis = Mock
+
         sherlock.RedisLock._acquire = Mock(return_value=True)
         sherlock.RedisLock._release = Mock()
         sherlock.RedisLock.locked = Mock(return_value=False)

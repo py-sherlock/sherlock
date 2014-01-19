@@ -200,7 +200,7 @@ class Lock(BaseLock):
             raise LockException('Lock backend has not been configured and '
                                 'lock cannot be acquired or released. '
                                 'Configure lock backend first.')
-        return self._lock_proxy.acquire()
+        return self._lock_proxy.acquire(False)
 
     def _release(self):
         if self._lock_proxy is None:
