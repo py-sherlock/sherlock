@@ -89,10 +89,10 @@ class TestLock(unittest.TestCase):
         self.assertRaises(LockException, lock.locked)
 
     def test_lock_creates_proxy_when_backend_is_set(self):
-        sherlock._configuration.backend = sherlock.backends.REDIS
+        sherlock._configuration.backend = sherlock.backends.ETCD
         lock = sherlock.Lock('')
         self.assertTrue(isinstance(lock._lock_proxy,
-                                   sherlock.RedisLock))
+                                   sherlock.EtcdLock))
 
     def test_lock_uses_proxys_methods(self):
         sherlock.redis.StrictRedis = Mock

@@ -12,6 +12,7 @@ from mock import Mock
 class TestConfiguration(unittest.TestCase):
 
     def setUp(self):
+        reload(sherlock)
         self.configure = _Configuration()
 
     def test_update_settings_raises_error_when_updating_invalid_config(self):
@@ -24,11 +25,13 @@ class TestConfiguration(unittest.TestCase):
         self.configure.update(namespace='something')
         self.assertEqual(self.configure.namespace, 'something')
 
-    def test_backend_gets_backend(self):
+    def test_backend_gets_backend_when_backend_is_not_set(self):
         # When backend is not set
+        self.assertEqual(self.configure._backend, None)
         self.assertEqual(self.configure._backend, self.configure.backend)
         self.assertEqual(self.configure._backend, None)
 
+    def test_backend_gets_backend_when_backend_is_set(self):
         # When backend is set
         self.configure.backend = sherlock.backends.REDIS
         self.assertEqual(self.configure._backend, self.configure.backend)
@@ -74,7 +77,7 @@ class TestConfiguration(unittest.TestCase):
         self.configure.backend = sherlock.backends.REDIS
         self.assertTrue(isinstance(self.configure.client, Mock))
 
-    def test_client_allows_setting_of_valid_client_objects_only(self):
+    def test_client_sets_valid_client_obj_only_when_backend_set(self):
         # When backend is set and client object is invalid
         self.configure.backend = sherlock.backends.REDIS
         def _test():
@@ -85,6 +88,7 @@ class TestConfiguration(unittest.TestCase):
         sherlock.redis.client.StrictRedis = Mock
         self.configure.client = Mock()
 
+    def test_client_sets_valid_client_obj_only_when_backend_not_set(self):
         # When backend is not set and client library is available and client is
         # valid
         self.configure._backend = None
