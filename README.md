@@ -13,4 +13,4 @@ inter-process locks and at the same time being backend agnostic.
 ## Coming Soon
 
 * Support for Zookeeper
-* Works well with Gevent, Tornado, Twisted, Multithreading, Multiprocessing.
+* Works with Gevent, Multithreading, Multiprocessing.
