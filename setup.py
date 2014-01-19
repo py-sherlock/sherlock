@@ -5,14 +5,14 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-from distributedlock import __version__
+from sherlock import __version__
 
 
 # read contents of a file
 read_file = lambda x: open(x, 'r').read()
 
 setup(
-    name='distributedlock',
+    name='sherlock',
     version=__version__,
     author='Vaidik Kapoor',
     author_email='kapoor.vaidik@gmail.com',

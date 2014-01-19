@@ -2,10 +2,10 @@
     Tests for some basic package's root level functionality.
 '''
 
-import distributedlock
+import sherlock
 import unittest
 
-from distributedlock import _Configuration
+from sherlock import _Configuration
 from mock import Mock
 
 
@@ -30,10 +30,10 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(self.configure._backend, None)
 
         # When backend is set
-        self.configure.backend = distributedlock.backends.REDIS
+        self.configure.backend = sherlock.backends.REDIS
         self.assertEqual(self.configure._backend, self.configure.backend)
         self.assertEqual(self.configure._backend,
-                         distributedlock.backends.REDIS)
+                         sherlock.backends.REDIS)
 
     def test_backend_raises_error_on_setting_invalid_backend(self):
         def _test():
@@ -42,17 +42,17 @@ class TestConfiguration(unittest.TestCase):
         self.assertRaises(ValueError, _test)
 
     def test_backend_raises_import_error_when_library_not_available(self):
-        distributedlock.backends.REDIS['available'] = False
+        sherlock.backends.REDIS['available'] = False
         def _test():
-            self.configure.backend = distributedlock.backends.REDIS
+            self.configure.backend = sherlock.backends.REDIS
 
         self.assertRaises(ImportError, _test)
-        distributedlock.backends.REDIS['available'] = True
+        sherlock.backends.REDIS['available'] = True
 
     def test_backend_sets_backend_value(self):
-        self.configure.backend = distributedlock.backends.REDIS
+        self.configure.backend = sherlock.backends.REDIS
         self.assertEqual(self.configure._backend,
-                         distributedlock.backends.REDIS)
+                         sherlock.backends.REDIS)
 
     def test_client_returns_the_set_client_object(self):
         client = Mock()
@@ -69,20 +69,20 @@ class TestConfiguration(unittest.TestCase):
 
     def test_client_returns_client_when_not_set_but_backend_is_set(self):
         mock_obj = Mock()
-        distributedlock.redis.StrictRedis = Mock
-        distributedlock.redis.client.StrictRedis = Mock
-        self.configure.backend = distributedlock.backends.REDIS
+        sherlock.redis.StrictRedis = Mock
+        sherlock.redis.client.StrictRedis = Mock
+        self.configure.backend = sherlock.backends.REDIS
         self.assertTrue(isinstance(self.configure.client, Mock))
 
     def test_client_allows_setting_of_valid_client_objects_only(self):
         # When backend is set and client object is invalid
-        self.configure.backend = distributedlock.backends.REDIS
+        self.configure.backend = sherlock.backends.REDIS
         def _test():
             self.configure.client = None
         self.assertRaises(ValueError, _test)
 
         # When backend is set and client object is valid
-        distributedlock.redis.client.StrictRedis = Mock
+        sherlock.redis.client.StrictRedis = Mock
         self.configure.client = Mock()
 
         # When backend is not set and client library is available and client is
@@ -116,15 +116,15 @@ class TestConfiguration(unittest.TestCase):
         self.configure._backend = None
         self.configure._client = None
         self.assertEquals(self.configure.backend, None)
-        distributedlock.backends.REDIS['available'] = False
-        distributedlock.backends.MEMCACHED['available'] = False
-        distributedlock.backends.ETCD['available'] = False
+        sherlock.backends.REDIS['available'] = False
+        sherlock.backends.MEMCACHED['available'] = False
+        sherlock.backends.ETCD['available'] = False
         def _test():
             self.configure.client = Mock()
         self.assertRaises(ValueError, _test)
-        distributedlock.backends.REDIS['available'] = True
-        distributedlock.backends.MEMCACHED['available'] = True
-        distributedlock.backends.ETCD['available'] = True
+        sherlock.backends.REDIS['available'] = True
+        sherlock.backends.MEMCACHED['available'] = True
+        sherlock.backends.ETCD['available'] = True
 
 
 def testConfigure():
@@ -132,5 +132,5 @@ def testConfigure():
     Test the library configure function.
     '''
 
-    distributedlock.configure(namespace='namespace')
-    assert distributedlock._configuration.namespace == 'namespace'
+    sherlock.configure(namespace='namespace')
+    assert sherlock._configuration.namespace == 'namespace'

@@ -1,4 +1,4 @@
-# distributedlock
+# sherlock
 
 This project aims at providing easy to use API for acquiring distributed
 inter-process locks and at the same time being backend agnostic.
@@ -7,6 +7,10 @@ inter-process locks and at the same time being backend agnostic.
 
 * API similar to standard library's Lock.
 * Support for With statement.
-* Backend agnostic: supports Etcd, Zookeeper, Redis, Memcached. Can be extended
-  work with other DBs as well.
+* Backend agnostic: supports Etcd, Redis, Memcached. Can be extended to
+  work with other data stores as well.
+
+## Coming Soon
+
+* Support for Zookeeper
 * Works well with Gevent, Tornado, Twisted, Multithreading, Multiprocessing.
