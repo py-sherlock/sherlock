@@ -125,7 +125,7 @@ class _Configuration(object):
                 if isinstance(val, etcd.Client):
                     self._client = val
                 else:
-                    raise ValueError(exc_msg % (self.backend['ibrary'],
+                    raise ValueError(exc_msg % (self.backend['library'],
                                                 self.backend['name']))
             elif self.backend == backends.MEMCACHED:
                 if isinstance(val, pylibmc.Client):
