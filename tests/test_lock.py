@@ -2,10 +2,11 @@
     Tests for all sorts of locks.
 '''
 
+import etcd
+import redis
 import sherlock
 import unittest
 
-from sherlock import LockException, LockTimeoutException
 from mock import Mock
 
 
@@ -17,8 +18,7 @@ class TestBaseLock(unittest.TestCase):
         self.assertEqual(lock.namespace, 'new_namespace')
 
     def test_init_does_not_use_global_default_for_client_obj(self):
-        client_obj = Mock()
-        sherlock.redis.client.StrictRedis = Mock
+        client_obj = etcd.Client()
         sherlock.configure(client=client_obj)
         lock = sherlock.lock.BaseLock('lockname')
         self.assertNotEqual(lock.client, client_obj)
@@ -60,7 +60,7 @@ class TestBaseLock(unittest.TestCase):
     def test_acquire_obeys_timeout(self):
         lock = sherlock.lock.BaseLock('123', timeout=1)
         lock._acquire = Mock(return_value=False)
-        self.assertRaises(LockTimeoutException, lock.acquire)
+        self.assertRaises(sherlock.LockTimeoutException, lock.acquire)
 
     def test_acquire_obeys_retry_interval(self):
         lock = sherlock.lock.BaseLock('123', timeout=0.5,
@@ -68,47 +68,112 @@ class TestBaseLock(unittest.TestCase):
         lock._acquire = Mock(return_value=False)
         try:
             lock.acquire()
-        except LockTimeoutException:
+        except sherlock.LockTimeoutException:
             pass
         self.assertEqual(lock._acquire.call_count, 6)
 
 
 class TestLock(unittest.TestCase):
 
+    def setUp(self):
+        reload(sherlock)
+        reload(sherlock.lock)
+
     def test_lock_does_not_accept_custom_client_object(self):
-        self.assertRaises(TypeError, sherlock.Lock, client=None)
+        self.assertRaises(TypeError, sherlock.lock.Lock, client=None)
 
     def test_lock_does_not_create_proxy_when_backend_is_not_set(self):
         sherlock._configuration._backend = None
         sherlock._configuration._client = None
-        lock = sherlock.Lock('')
+        lock = sherlock.lock.Lock('')
         self.assertEquals(lock._lock_proxy, None)
 
-        self.assertRaises(LockException, lock.acquire)
-        self.assertRaises(LockException, lock.release)
-        self.assertRaises(LockException, lock.locked)
+        self.assertRaises(sherlock.lock.LockException, lock.acquire)
+        self.assertRaises(sherlock.lock.LockException, lock.release)
+        self.assertRaises(sherlock.lock.LockException, lock.locked)
 
     def test_lock_creates_proxy_when_backend_is_set(self):
         sherlock._configuration.backend = sherlock.backends.ETCD
-        lock = sherlock.Lock('')
+        lock = sherlock.lock.Lock('')
         self.assertTrue(isinstance(lock._lock_proxy,
-                                   sherlock.EtcdLock))
+                                   sherlock.lock.EtcdLock))
 
     def test_lock_uses_proxys_methods(self):
-        sherlock.redis.StrictRedis = Mock
-
-        sherlock.RedisLock._acquire = Mock(return_value=True)
-        sherlock.RedisLock._release = Mock()
-        sherlock.RedisLock.locked = Mock(return_value=False)
+        sherlock.lock.RedisLock._acquire = Mock(return_value=True)
+        sherlock.lock.RedisLock._release = Mock()
+        sherlock.lock.RedisLock.locked = Mock(return_value=False)
 
         sherlock._configuration.backend = sherlock.backends.REDIS
-        lock = sherlock.Lock('')
+        lock = sherlock.lock.Lock('')
 
         lock.acquire()
-        self.assertTrue(sherlock.RedisLock._acquire.called)
+        self.assertTrue(sherlock.lock.RedisLock._acquire.called)
 
         lock.release()
-        self.assertTrue(sherlock.RedisLock._release.called)
+        self.assertTrue(sherlock.lock.RedisLock._release.called)
 
         lock.locked()
-        self.assertTrue(sherlock.RedisLock.locked.called)
+        self.assertTrue(sherlock.lock.RedisLock.locked.called)
+
+
+class TestRedisLock(unittest.TestCase):
+
+    def setUp(self):
+        reload(sherlock)
+        reload(sherlock.lock)
+
+    def test_valid_key_names_are_generated_when_namespace_not_set(self):
+        name = 'lock'
+        lock = sherlock.lock.RedisLock(name)
+        self.assertEquals(lock._key_name, name)
+
+    def test_valid_key_names_are_generated_when_namespace_is_set(self):
+        name = 'lock'
+        lock = sherlock.lock.RedisLock(name, namespace='local_namespace')
+        self.assertEquals(lock._key_name, 'local_namespace_%s' % name)
+
+        sherlock.configure(namespace='global_namespace')
+        lock = sherlock.lock.RedisLock(name)
+        self.assertEquals(lock._key_name, 'global_namespace_%s' % name)
+
+
+class TestEtcdLock(unittest.TestCase):
+
+    def setUp(self):
+        reload(sherlock)
+        reload(sherlock.lock)
+
+    def test_valid_key_names_are_generated_when_namespace_not_set(self):
+        name = 'lock'
+        lock = sherlock.lock.EtcdLock(name)
+        self.assertEquals(lock._key_name, '/' + name)
+
+    def test_valid_key_names_are_generated_when_namespace_is_set(self):
+        name = 'lock'
+        lock = sherlock.lock.EtcdLock(name, namespace='local_namespace')
+        self.assertEquals(lock._key_name, '/local_namespace/%s' % name)
+
+        sherlock.configure(namespace='global_namespace')
+        lock = sherlock.lock.EtcdLock(name)
+        self.assertEquals(lock._key_name, '/global_namespace/%s' % name)
+
+
+class TestMCLock(unittest.TestCase):
+
+    def setUp(self):
+        reload(sherlock)
+        reload(sherlock.lock)
+
+    def test_valid_key_names_are_generated_when_namespace_not_set(self):
+        name = 'lock'
+        lock = sherlock.lock.MCLock(name)
+        self.assertEquals(lock._key_name, name)
+
+    def test_valid_key_names_are_generated_when_namespace_is_set(self):
+        name = 'lock'
+        lock = sherlock.lock.MCLock(name, namespace='local_namespace')
+        self.assertEquals(lock._key_name, 'local_namespace_%s' % name)
+
+        sherlock.configure(namespace='global_namespace')
+        lock = sherlock.lock.MCLock(name)
+        self.assertEquals(lock._key_name, 'global_namespace_%s' % name)
