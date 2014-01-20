@@ -3,12 +3,19 @@ python:
   - "2.6"
   - "2.7"
 
+before_install:
+  - wget https://github.com/coreos/etcd/releases/download/v0.2.0/etcd-v0.2.0-Linux-x86_64.tar.gz
+  - tar -zxvf etcd-v0.2.0-Linux-x86_64.tar.gz
+  - ./etcd-v0.2.0-Linux-x86_64/etcd &
+  - sleep 2
+
 install:
   - pip install pytz
   - pip install coveralls
 
 services:
   - redis-server
+  - memcached
 
 # command to run tests
 script:
