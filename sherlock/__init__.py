@@ -100,7 +100,8 @@ class _Configuration(object):
             elif self.backend == backends.ETCD:
                 self.client = etcd.Client()
             elif self.backend == backends.MEMCACHED:
-                self.client = pylibmc.Client()
+                self.client = pylibmc.Client(['localhost'],
+                                             binary=True)
 
         return self._client
 
