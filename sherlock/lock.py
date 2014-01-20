@@ -50,9 +50,10 @@ class BaseLock(object):
                               between processes.
         :param str namespace: Optional namespace to namespace lock keys for
                               your application in order to avoid conflicts.
-        :param int expire: set lock expiry time.
-        :param int timeout: set timeout to acquire lock
-        :param int retry_interval: set interval for trying acquiring lock
+        :param float expire: set lock expiry time. If explicitly set to `None`,
+                             lock will not expire.
+        :param float timeout: set timeout to acquire lock
+        :param float retry_interval: set interval for trying acquiring lock
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         '''
@@ -64,10 +65,10 @@ class BaseLock(object):
         else:
             self.namespace = _configuration.namespace
 
-        if kwargs.get('expire'):
-            self.expire = kwargs['expire']
-        else:
+        if 'expire' not in kwargs:
             self.expire = _configuration.expire
+        else:
+            self.expire = kwargs['expire']
 
         if kwargs.get('timeout'):
             self.timeout = kwargs['timeout']
@@ -167,10 +168,11 @@ class Lock(BaseLock):
                               between processes.
         :param str namespace: Optional namespace to namespace lock keys for
                               your application in order to avoid conflicts.
-        :param int expire: set lock expiry time.
-        :param int timeout: set timeout to acquire lock
-        :param int retry_interval: set interval for trying acquiring lock
-                                   after the timeout interval has elapsed.
+        :param float expire: set lock expiry time. If explicitly set to `None`,
+                             lock will not expire.
+        :param float timeout: set timeout to acquire lock
+        :param float retry_interval: set interval for trying acquiring lock
+                                     after the timeout interval has elapsed.
 
         .. Note:: this Lock object does not accept a custom lock backend store
                   client object. It instead uses the global custom client
@@ -225,7 +227,7 @@ class RedisLock(BaseLock):
 
     _acquire_script = '''
     local result = redis.call('SETNX', KEYS[1], KEYS[2])
-    if result == 1 then
+    if result == 1 and KEYS[2] ~= nil then
         redis.call('EXPIRE', KEYS[1], KEYS[3])
     end
     return result
@@ -246,10 +248,11 @@ class RedisLock(BaseLock):
                               between processes.
         :param str namespace: Optional namespace to namespace lock keys for
                               your application in order to avoid conflicts.
-        :param int expire: set lock expiry time.
-        :param int timeout: set timeout to acquire lock
-        :param int retry_interval: set interval for trying acquiring lock
-                                   after the timeout interval has elapsed.
+        :param float expire: set lock expiry time. If explicitly set to `None`,
+                             lock will not expire.
+        :param float timeout: set timeout to acquire lock
+        :param float retry_interval: set interval for trying acquiring lock
+                                     after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         '''
 
@@ -306,10 +309,11 @@ class EtcdLock(BaseLock):
                               between processes.
         :param str namespace: Optional namespace to namespace lock keys for
                               your application in order to avoid conflicts.
-        :param int expire: set lock expiry time.
-        :param int timeout: set timeout to acquire lock
-        :param int retry_interval: set interval for trying acquiring lock
-                                   after the timeout interval has elapsed.
+        :param float expire: set lock expiry time. If explicitly set to `None`,
+                             lock will not expire.
+        :param float timeout: set timeout to acquire lock
+        :param float retry_interval: set interval for trying acquiring lock
+                                     after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         '''
 
@@ -333,7 +337,10 @@ class EtcdLock(BaseLock):
         try:
             self.client.get(self._key_name)
         except KeyError:
-            self.client.set(self._key_name, owner, ttl=self.expire)
+            _args = [self._key_name, owner]
+            if self.expire is not None:
+                _args.append(self.expire)
+            self.client.set(*tuple(_args))
             self._owner = owner
             return True
         else:
@@ -372,10 +379,11 @@ class MCLock(BaseLock):
                               between processes.
         :param str namespace: Optional namespace to namespace lock keys for
                               your application in order to avoid conflicts.
-        :param int expire: set lock expiry time.
-        :param int timeout: set timeout to acquire lock
-        :param int retry_interval: set interval for trying acquiring lock
-                                   after the timeout interval has elapsed.
+        :param float expire: set lock expiry time. If explicitly set to `None`,
+                             lock will not expire.
+        :param float timeout: set timeout to acquire lock
+        :param float retry_interval: set interval for trying acquiring lock
+                                     after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         '''
 
@@ -398,9 +406,11 @@ class MCLock(BaseLock):
     def _acquire(self):
         owner = uuid.uuid4()
 
+        _args = [self._key_name, str(owner)]
+        if self.expire is not None:
+            _args.append(self.expire)
         # Set key only if it does not exist
-        if self.client.add(self._key_name, str(owner),
-                           time=self.expire) is True:
+        if self.client.add(*tuple(_args)) is True:
             self._owner = owner
             return True
         else:

@@ -45,7 +45,8 @@ def configure(**kwargs):
     Set basic configuration for the entire module.
 
     :param str namespace: provide global namespace
-    :param float expire: provide global expiration time
+    :param float expire: provide global expiration time. If expicitly set to
+                         `None`, lock will not expire.
     :param float timeout: provide global timeout period
     :param float retry_interval: provide global retry interval
     '''
@@ -65,7 +66,8 @@ class _Configuration(object):
         # Namespace to use for setting lock keys in the backend store
         self.namespace = None
 
-        # Lock expiration time
+        # Lock expiration time. If explicitly set to `None`, lock will not
+        # expire.
         self.expire = 60
 
         # Timeout to acquire lock
@@ -158,7 +160,8 @@ class _Configuration(object):
                        store.
         :param str namespace: optional global namespace to namespace lock keys
                               for your application in order to avoid conflicts.
-        :param float expire: global lock expiry time.
+        :param float expire: set lock expiry time. If explicitly set to `None`,
+                             lock will not expire.
         :param float timeout: global timeout for acquiring a lock.
         :param float retry_interval: global timeout for retrying to acquire the
                                      lock if previous attempts failed.
