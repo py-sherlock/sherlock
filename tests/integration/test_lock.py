@@ -48,7 +48,7 @@ class TestRedisLock(unittest.TestCase):
         lock = sherlock.RedisLock(self.lock_name, expire=None)
         lock.acquire()
         time.sleep(2)
-        self.assertEquals(self.client.ttl(self.lock_name), -1)
+        self.assertTrue(self.client.ttl(self.lock_name) < 0)
 
     def test_release(self):
         lock = sherlock.RedisLock(self.lock_name)
