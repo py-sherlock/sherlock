@@ -28,9 +28,6 @@ setup(
         'python-etcd',
         'pylibmc',
     ],
-    dependency_links=[
-        'http://github.com/jplana/python-etcd/tarball/master#egg=python-etcd-0.3.0',
-    ],
     zip_safe = False,
     classifiers = [
         'Development Status :: 5 - Production/Stable',
