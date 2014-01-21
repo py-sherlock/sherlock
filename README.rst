@@ -39,9 +39,9 @@ Features
 * Extendable: can be easily extended to work with any other of backend of
   choice by extending base lock class.
 
-.. _Redis:: http://redis.io
-.. _Memcached:: http://memcached.org
-.. _Etcd:: http://github.com/coreos/etcd
+.. _Redis: http://redis.io
+.. _Memcached: http://memcached.org
+.. _Etcd: http://github.com/coreos/etcd
 
 Supported Backends and Client Libraries
 +++++++++++++++++++++++++++++++++++++++
@@ -52,9 +52,9 @@ Following client libraries are supported for every supported backend:
 * Memcached: `pylibmc`_
 * Etcd: `python-etcd`_
 
-.. _redis-py:: http://github.com
-.. _pylibmc:: http://github.com
-.. _python-etcd:: https://github.com/jplana/python-etcd
+.. _redis-py: http://github.com
+.. _pylibmc: http://github.com
+.. _python-etcd: https://github.com/jplana/python-etcd
 
 As of now, only the above mentioned libraries are supported. Although Sherlock
 takes custom client objects so that you can easily provide settings that you
@@ -167,10 +167,10 @@ Roadmap
 * Support for `Zookeeper`_ as backend.
 * Support for `Gevent`_, `Multithreading`_ and `Multiprocessing`_.
 
-.. _Zookeeper:: http://zookeeper.apache.org/
-.. _Gevent:: http://www.gevent.org/
-.. _Multithreading:: http://docs.python.org/2/library/multithreading.html
-.. _Multiprocessing:: http://docs.python.org/2/library/multiprocessing.html
+.. _Zookeeper: http://zookeeper.apache.org/
+.. _Gevent: http://www.gevent.org/
+.. _Multithreading: http://docs.python.org/2/library/multithreading.html
+.. _Multiprocessing: http://docs.python.org/2/library/multiprocessing.html
 
 License
 -------
