@@ -44,6 +44,12 @@ class TestRedisLock(unittest.TestCase):
         time.sleep(2)
         self.assertFalse(lock.locked())
 
+    def test_acquire_check_expire_is_not_set(self):
+        lock = sherlock.RedisLock(self.lock_name, expire=None)
+        lock.acquire()
+        time.sleep(2)
+        self.assertEquals(self.client.ttl(self.lock_name), -1)
+
     def test_release(self):
         lock = sherlock.RedisLock(self.lock_name)
         lock._acquire()
@@ -104,6 +110,12 @@ class TestEtcdLock(unittest.TestCase):
         lock.acquire()
         time.sleep(2)
         self.assertFalse(lock.locked())
+
+    def test_acquire_check_expire_is_not_set(self):
+        lock = sherlock.EtcdLock(self.lock_name, expire=None)
+        lock.acquire()
+        time.sleep(2)
+        self.assertEquals(self.client.get(self.lock_name).ttl, None)
 
     def test_release(self):
         lock = sherlock.EtcdLock(self.lock_name)

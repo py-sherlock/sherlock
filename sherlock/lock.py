@@ -227,7 +227,7 @@ class RedisLock(BaseLock):
 
     _acquire_script = '''
     local result = redis.call('SETNX', KEYS[1], KEYS[2])
-    if result == 1 and KEYS[2] ~= nil then
+    if result == 1 then
         redis.call('EXPIRE', KEYS[1], KEYS[3])
     end
     return result
@@ -277,9 +277,13 @@ class RedisLock(BaseLock):
 
     def _acquire(self):
         owner = uuid.uuid4()
+        if self.expire is None:
+            expire = -1
+        else:
+            expire = self.expire
         if self._acquire_func(keys=[self._key_name,
                                     owner,
-                                    self.expire]) != 1:
+                                    expire]) != 1:
             return False
         self._owner = owner
         return True
