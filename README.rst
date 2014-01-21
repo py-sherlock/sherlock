@@ -36,8 +36,8 @@ Features
 * Support for With statement, to cleanly acquire and release locks.
 * Backend agnostic: supports `Redis`_, `Memcached`_ and `Etcd`_ as choice of
   backends.
-* Extendable: can be easily extended to work with anyother of backend of choice
-  by extending classes.
+* Extendable: can be easily extended to work with any other of backend of
+  choice by extending base lock class.
 
 .. _Redis:: http://redis.io
 .. _Memcached:: http://memcached.org
@@ -138,7 +138,8 @@ Read the documentation availalbe on `Read The Docs`_ for more detailed usage.
 Tests
 -----
 
-Make sure all the services are running:
+To run all the tests (including integration), you have to make sure that all
+the databases are running. Make sure all the services are running:
 
 .. code:: bash
 
@@ -148,7 +149,8 @@ Make sure all the services are running:
     # redis-server
     redis-server
 
-    # etcd
+    # etcd (etcd is probably not available as package, here is the simplest way
+    # to run it).
     wget https://github.com/coreos/etcd/releases/download/<version>/etcd-<version>-<platform>.tar.gz
     tar -zxvf etcd-<version>-<platform>.gz
     ./etcd-<version>-<platform>/etcd
