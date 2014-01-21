@@ -9,17 +9,23 @@ __title__ = 'sherlock'
 __version__ = '.'.join(map(str, (0, 0, 0)))
 __author__ = 'Vaidik Kapoor'
 
-# read contents of a file
-read_file = lambda x: open(x, 'r').read()
+import os
+
+# get path of repo files
+path = lambda fname: os.path.join(os.path.dirname(__file__), fname)
+
+description = ''
+for file_ in ('README.rst', 'LICENSE.rst', 'CHANGELOG.rst'):
+    with open(path('%s' % file_)) as f:
+        description += f.read() + '\n\n'
 
 setup(
     name='sherlock',
     version=__version__,
     author='Vaidik Kapoor',
     author_email='kapoor.vaidik@gmail.com',
-    description=('Locks that can be acquired in different processes running '
-                 'on same or different machines.'),
-    long_description=read_file('README.md'),
+    description=('Distributed inter-process locks with a choice of backend.'),
+    long_description=description,
     platforms=('Any',),
     packages=find_packages(exclude=['tests']),
     include_package_data=True,

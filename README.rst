@@ -15,6 +15,19 @@ synchronization.
 Overview
 --------
 
+When you are working with resources which are accessed by multiple services or
+distributed services, more than often you need some kind of locking mechanism
+to make it possible to access some resources at a time.
+
+Distributed Locks or Mutexes can help you with this. Sherlock provides the
+exact same facility, with some extra goodies. It provides an easy-to-use API
+that resembles standard library's `threading.Lock` semantics.
+
+Apart from this, Sherlock gives you the flexibilty of using a backend of your
+choice for managing locks.
+
+Sherlock also makes it simple for you to extend Sherlock to use backends that
+are not supported.
 
 Features
 ++++++++
@@ -30,8 +43,8 @@ Features
 .. _Memcached:: http://memcached.org
 .. _Etcd:: http://github.com/coreos/etcd
 
-Client Libraries
-++++++++++++++++
+Supported Backends and Client Libraries
++++++++++++++++++++++++++++++++++++++++
 
 Following client libraries are supported for every supported backend:
 
@@ -76,6 +89,12 @@ Basic Usage
     sherlock.configure(backend=sherlock.backends.REDIS,
                        expire=None,
                        retry_interval=0.1)
+
+    # Note: configuring Sherlock to use a backend does not limit you from using
+    # another backend at the same time. You can import backend specific locks
+    # like RedisLock, MCLock and EtcdLock and use them just the same way you
+    # use a generic lock (see below). In fact, the generic Lock provided by
+    # Sherlock is just a proxy that uses these specific locks under the hood.
 
     # acquire a lock called my_lock
     lock = Lock('my_lock')
