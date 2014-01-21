@@ -193,12 +193,8 @@ class Lock(BaseLock):
         if self.client is None:
             self._lock_proxy = None
         else:
-            if _configuration.backend == backends.REDIS:
-                self._lock_proxy = RedisLock(lock_name, **kwargs)
-            elif _configuration.backend == backends.ETCD:
-                self._lock_proxy = EtcdLock(lock_name, **kwargs)
-            if _configuration.backend == backends.MEMCACHED:
-                self._lock_proxy = MCLock(lock_name, **kwargs)
+            self._lock_proxy = globals()[_configuration.backend['lock_class']](
+                lock_name, **kwargs)
 
     def _acquire(self):
         if self._lock_proxy is None:

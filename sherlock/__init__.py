@@ -19,14 +19,20 @@ class _Backends(object):
     REDIS = {
         'name': 'REDIS',
         'library': 'redis',
+        'client_class': redis.StrictRedis,
+        'lock_class': 'RedisLock',
     }
     ETCD = {
         'name': 'ETCD',
         'library': 'etcd',
+        'client_class': etcd.Client,
+        'lock_class': 'EtcdLock',
     }
     MEMCACHED = {
         'name': 'MEMCACHED',
         'library': 'pylibmc',
+        'client_class': pylibmc.Client,
+        'lock_class': 'MCLock',
     }
 
     @property
@@ -113,34 +119,16 @@ class _Configuration(object):
         if self.backend is not None:
             exc_msg = ('Only a client of the %s library can be used '
                        'when using %s as the backend store option.')
-            if self.backend == backends.REDIS:
-                if isinstance(val, redis.client.StrictRedis):
-                    self._client = val
-                else:
-                    raise ValueError(exc_msg % (self.backend['library'],
-                                                self.backend['name']))
-            elif self.backend == backends.ETCD:
-                if isinstance(val, etcd.Client):
-                    self._client = val
-                else:
-                    raise ValueError(exc_msg % (self.backend['library'],
-                                                self.backend['name']))
-            elif self.backend == backends.MEMCACHED:
-                if isinstance(val, pylibmc.Client):
-                    self._client = val
-                else:
-                    raise ValueError(exc_msg % (self.backend['ibrary'],
-                                                self.backend['name']))
+            if isinstance(val, self.backend['client_class']):
+                self._client = val
+            else:
+                raise ValueError(exc_msg % (self.backend['library'],
+                                            self.backend['name']))
         else:
-            if isinstance(val, redis.client.StrictRedis):
-                self._client = val
-                self.backend = backends.REDIS
-            elif isinstance(val, etcd.Client):
-                self._client = val
-                self.backend = backends.ETCD
-            elif isinstance(val, pylibmc.Client):
-                self._client = val
-                self.backend = backends.MEMCACHED
+            for backend in backends.valid_backends:
+                if isinstance(val, backend['client_class']):
+                    self._client = val
+                    self.backend = backend
             if self._client is None:
                 raise ValueError('The provided object is not a valid client'
                                  'object. Client objects can only be '
