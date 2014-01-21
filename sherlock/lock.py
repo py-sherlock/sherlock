@@ -193,8 +193,12 @@ class Lock(BaseLock):
         if self.client is None:
             self._lock_proxy = None
         else:
-            self._lock_proxy = globals()[_configuration.backend['lock_class']](
-                lock_name, **kwargs)
+            try:
+                self._lock_proxy = globals()[_configuration.backend['lock_class']](
+                    lock_name, **kwargs)
+            except KeyError:
+                self._lock_proxy = _configuration.backend['lock_class'](
+                    lock_name, **kwargs)
 
     def _acquire(self):
         if self._lock_proxy is None:

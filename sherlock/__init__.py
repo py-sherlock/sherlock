@@ -35,15 +35,58 @@ class _Backends(object):
         'lock_class': 'MCLock',
     }
 
+    _valid_backends = (
+        REDIS,
+        ETCD,
+        MEMCACHED,
+    )
+
+    def register(self, **kwargs):
+        '''
+        Register a custom backend.
+
+        :param str name: Name of the backend by which you would want to refer
+                         this backend in your code.
+        :param class lock_class: the sub-class of
+                                 :class:`sherlock.lock.BaseLock` that you have
+                                 implemented. The reference to your implemented
+                                 lock class will be used by
+                                 :class:`sherlock.Lock` proxy to use your
+                                 implemented class when you globally set that
+                                 the choice of backend is the one that has been
+                                 implemented by you.
+        :param str library: dependent client library that this implementation
+                            makes use of.
+        :param client_class: the client class or valid type which you use to
+                             connect the datastore. This is used by the
+                             :func:`configure` function to validate that
+                             the object provided for the `client`
+                             parameter is actually an instance of this class.
+        :param tuple default_args: default arguments that need to passed to
+                                   create an instance of the callable passed to
+                                   `client_class` parameter.
+        :param dict default_kwargs: default keyword arguments that need to
+                                    passed to create an instance of the
+                                    callable passed to `client_class`
+                                    parameter.
+        '''
+
+        if not issubclass(kwargs['lock_class'], lock.BaseLock):
+            raise ValueError('lock_class parameter must be a sub-class of '
+                             'sherlock.lock.BaseLock')
+        setattr(self, kwargs['name'], kwargs)
+
+        valid_backends = list(self._valid_backends)
+        valid_backends.append(getattr(self, kwargs['name']))
+        self._valid_backends = tuple(valid_backends)
+
     @property
     def valid_backends(self):
         '''
         Return a tuple of valid backends.
         '''
 
-        return (self.REDIS,
-                self.ETCD,
-                self.MEMCACHED)
+        return self._valid_backends
 
 
 def configure(**kwargs):
@@ -110,6 +153,10 @@ class _Configuration(object):
             elif self.backend == backends.MEMCACHED:
                 self.client = pylibmc.Client(['localhost'],
                                              binary=True)
+            else:
+                self.client = self.backend['client_class'](
+                    *self.backend['default_args'],
+                    **self.backend['default_kwargs'])
 
         return self._client
 
@@ -169,4 +216,5 @@ backends = _Backends()
 _configuration = _Configuration()
 
 # Import important Lock classes
+from . import lock
 from .lock import *
