@@ -123,13 +123,27 @@ class _Backends(object):
 
 def configure(**kwargs):
     '''
-    Set basic configuration for the entire module.
+    Set basic global configuration for :mod:`sherlock`.
 
+    :param backend: global choice of backend. This backend will be used
+                    for managing locks by :class:`sherlock.Lock` class
+                    objects.
+    :param client: global client object to use to connect with backend
+                   store. This client object will be used to connect to the
+                   backend store by :class:`sherlock.Lock` class instances.
     :param str namespace: provide global namespace
     :param float expire: provide global expiration time. If expicitly set to
                          `None`, lock will not expire.
     :param float timeout: provide global timeout period
     :param float retry_interval: provide global retry interval
+
+    .. note:: the global default client object set using the client parameter
+              will be used only by :class:`sherlock.Lock` instances. Other
+              :ref:`backend-specific-locks` will either use the provided client
+              object at the time of instantiating the lock object or will
+              default to creating a simple client object by themselves for
+              their backend store, which will assume that their backend store
+              is running on localhost.
     '''
 
     _configuration.update(**kwargs)

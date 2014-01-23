@@ -42,6 +42,12 @@ class LockTimeoutException(Exception):
 
 class BaseLock(object):
 
+    '''
+    Interface for implementing custom Lock implementations. This class must be
+    sub-classed in order to implement a custom Lock with custom logic or
+    different backend or both.
+    '''
+
     def __init__(self,
                  lock_name,
                  **kwargs):
@@ -159,7 +165,8 @@ class BaseLock(object):
 
 class Lock(BaseLock):
     '''
-    A general lock that inherits global coniguration and provides locks.
+    A general lock that inherits global coniguration and provides locks with
+    the configured backend.
     '''
 
     def __init__(self, lock_name, **kwargs):
@@ -224,6 +231,9 @@ class Lock(BaseLock):
 
 
 class RedisLock(BaseLock):
+    '''
+    Implementation of lock with Redis as the backend for synchronization.
+    '''
 
     _acquire_script = '''
     local result = redis.call('SETNX', KEYS[1], KEYS[2])
@@ -306,6 +316,9 @@ class RedisLock(BaseLock):
 
 
 class EtcdLock(BaseLock):
+    '''
+    Implementation of lock with Etcd as the backend for synchronization.
+    '''
 
     def __init__(self, lock_name, **kwargs):
         '''
@@ -376,6 +389,9 @@ class EtcdLock(BaseLock):
 
 
 class MCLock(BaseLock):
+    '''
+    Implementation of lock with Memcached as the backend for synchronization.
+    '''
 
     def __init__(self, lock_name, **kwargs):
         '''
