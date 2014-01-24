@@ -246,6 +246,11 @@ class Lock(BaseLock):
     >>>
     >>> lock.locked()
     True
+    >>>
+    >>> # Acquire a lock using the with_statement
+    >>> with Lock('my_lock') as lock:
+    ...     # do some stuff with your acquired resource
+    ...     pass
     '''
 
     def __init__(self, lock_name, **kwargs):
@@ -349,6 +354,11 @@ class RedisLock(BaseLock):
     >>>
     >>> # To override the defaults, just past the configurations as parameters
     >>> lock = RedisLock('my_lock', client=client, expire=1, timeout=5)
+    >>>
+    >>> # Acquire a lock using the with_statement
+    >>> with RedisLock('my_lock') as lock:
+    ...     # do some stuff with your acquired resource
+    ...     pass
     '''
 
     _acquire_script = '''
@@ -471,6 +481,11 @@ class EtcdLock(BaseLock):
     >>>
     >>> # To override the defaults, just past the configurations as parameters
     >>> lock = EtcdLock('my_lock', client=client, expire=1, timeout=5)
+    >>>
+    >>> # Acquire a lock using the with_statement
+    >>> with EtcdLock('my_lock') as lock:
+    ...     # do some stuff with your acquired resource
+    ...     pass
     '''
 
     def __init__(self, lock_name, **kwargs):
@@ -581,6 +596,11 @@ class MCLock(BaseLock):
     >>>
     >>> # To override the defaults, just past the configurations as parameters
     >>> lock = MCLock('my_lock', client=client, expire=1, timeout=5)
+    >>>
+    >>> # Acquire a lock using the with_statement
+    >>> with MCLock('my_lock') as lock:
+    ...     # do some stuff with your acquired resource
+    ...     pass
     '''
 
     def __init__(self, lock_name, **kwargs):

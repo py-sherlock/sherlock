@@ -37,6 +37,9 @@ Basic Usage:
 >>> import sherlock
 >>> sherlock.configure(backend=sherlock.backends.REDIS)
 
+.. note:: this configuration cannot be overriden at the time of creating a
+          class object.
+
 Available Backends
 """"""""""""""""""
 
@@ -66,6 +69,9 @@ will either use the provided client object at the time of instantiating the
 lock object of their types or will default to creating a simple client object
 by themselves for their backend store, which will assume that their backend
 store is running on localhost.
+
+.. note:: this configuration cannot be overriden at the time of creating a
+          class object.
 
 Example:
 
@@ -136,12 +142,18 @@ created and the locks are created in that directory.
 
 By default, :mod:`sherlock` does not namespace the keys set for locks.
 
+.. note:: this configuration can be overriden at the time of creating a
+          class object.
+
 ``expire``
 ~~~~~~~~~~
 
 This parameter can be used to set the expiry of locks.
 
 This parameter's value defaults to ``60 seconds``.
+
+.. note:: this configuration can be overriden at the time of creating a
+          class object.
 
 Example:
 
@@ -170,6 +182,9 @@ This parameter can be used to set after how much time should :mod:`sherlock`
 stop trying to acquire an already acquired lock.
 
 This parameter's value defaults to ``10 seconds``.
+
+.. note:: this configuration can be overriden at the time of creating a
+          class object.
 
 Example:
 
@@ -207,6 +222,9 @@ will also mean that you are bombarding your datastore with requests one after
 another.
 
 This parameter's value defaults to ``0.1 seconds (100 milliseconds)``.
+
+.. note:: this configuration can be overriden at the time of creating a
+          class object.
 
 Generic Locks
 +++++++++++++
