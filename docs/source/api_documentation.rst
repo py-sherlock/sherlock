@@ -53,15 +53,16 @@ the defined backends. The defined backends are:
 ``client``
 ~~~~~~~~~~
 
-The `client` parameter allows you to set a custom clien object which `sherlock`
-can use for connecting to the backend store. This gives you the flexibility to
-connect to the backend store from the client the way you want. The provided
-custom client object must be a valid client object of the supported client
-libraries. If the global `backend` has been set, then the provided custom
-client object must be an instance of the client library supported by that
-backend. If the backend has not been set, then the custom client object must be
-an instance of a valid supported client. In this case, `sherlock` will set the
-backend by instrospecting the type of the provided client object.
+The `client` parameter allows you to set a custom clien object which
+:mod:`sherlock` can use for connecting to the backend store. This gives you the
+flexibility to connect to the backend store from the client the way you want.
+The provided custom client object must be a valid client object of the
+supported client libraries. If the global `backend` has been set, then the
+provided custom client object must be an instance of the client library
+supported by that backend. If the backend has not been set, then the custom
+client object must be an instance of a valid supported client. In this case,
+:mod:`sherlock` will set the backend by instrospecting the type of the provided
+client object.
 
 The global default client object set using the `client` parameter will be used
 only by :class:`sherlock.Lock` instances. Other :ref:`backend-specific-locks`
@@ -148,7 +149,8 @@ By default, :mod:`sherlock` does not namespace the keys set for locks.
 ``expire``
 ~~~~~~~~~~
 
-This parameter can be used to set the expiry of locks.
+This parameter can be used to set the expiry of locks. When set to :obj:`None`,
+the locks will never expire.
 
 This parameter's value defaults to ``60 seconds``.
 

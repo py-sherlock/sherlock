@@ -140,7 +140,7 @@ def configure(**kwargs):
                    to the same library that is supported for that backend.
                    If the backend has not been set, then the custom client
                    object must be an instance of a valid supported client.
-                   In that case, `sherlock` will set the backend by
+                   In that case, :mod:`sherlock` will set the backend by
                    introspecting the type of provided client object.
     :param str namespace: provide global namespace
     :param float expire: provide global expiration time. If expicitly set to

@@ -1,12 +1,12 @@
-.. Sherlock documentation master file, created by
+.. :mod:`sherlock` documentation master file, created by
    sphinx-quickstart on Wed Jan 22 11:28:21 2014.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Sherlock: Distributed Locks with a choice of backend
-====================================================
+:mod:`sherlock`: Distributed Locks with a choice of backend
+===========================================================
 
-**Sherlock** is a library that provides easy-to-use distributed inter-process
+:mod:`sherlock` is a library that provides easy-to-use distributed inter-process
 locks and also allows you to choose a backend of your choice for lock
 synchronization.
 
@@ -24,15 +24,15 @@ When you are working with resources which are accessed by multiple services or
 distributed services, more than often you need some kind of locking mechanism
 to make it possible to access some resources at a time.
 
-Distributed Locks or Mutexes can help you with this. Sherlock provides the
-exact same facility, with some extra goodies. It provides an easy-to-use API
+Distributed Locks or Mutexes can help you with this. :mod:`sherlock` provides
+the exact same facility, with some extra goodies. It provides an easy-to-use API
 that resembles standard library's `threading.Lock` semantics.
 
-Apart from this, Sherlock gives you the flexibilty of using a backend of your
-choice for managing locks.
+Apart from this, :mod:`sherlock` gives you the flexibilty of using a backend of
+your choice for managing locks.
 
-Sherlock also makes it simple for you to extend Sherlock to use backends that
-are not supported.
+:mod:`sherlock` also makes it simple for you to extend :mod:`sherlock` to use
+backends that are not supported.
 
 Features
 ++++++++
@@ -61,12 +61,13 @@ Following client libraries are supported for every supported backend:
 .. _pylibmc: http://github.com
 .. _python-etcd: https://github.com/jplana/python-etcd
 
-As of now, only the above mentioned libraries are supported. Although Sherlock
-takes custom client objects so that you can easily provide settings that you
-want to use for that backend store, but Sherlock also checks if the provided
-client object is an instance of the supported clients and accepts client
-objects which pass this check, even if the APIs are the same. Sherlock might
-get rid of this issue later, if need be and if there is a demand for that.
+As of now, only the above mentioned libraries are supported. Although
+:mod:`sherlock` takes custom client objects so that you can easily provide
+settings that you want to use for that backend store, but :mod:`sherlock` also
+checks if the provided client object is an instance of the supported clients
+and accepts client objects which pass this check, even if the APIs are the
+same. :mod:`sherlock` might get rid of this issue later, if need be and if
+there is a demand for that.
 
 Installation
 ------------
@@ -77,29 +78,32 @@ Installation is simple.
 
     pip install sherlock
 
-.. note:: Sherlock will install all the client libraries for all the
+.. note:: :mod:`sherlock` will install all the client libraries for all the
           supported backends.
 
 Basic Usage
 -----------
+
+:mod:`sherlock` is simple to use as at the API and semantics level, it tries to
+conform to standard library's :mod:`threading.Lock` APIs.
 
 .. code-block:: python
 
     import sherlock
     from sherlock import Lock
 
-    # Configure Sherlock's locks to use Redis as the backend,
+    # Configure :mod:`sherlock`'s locks to use Redis as the backend,
     # never expire locks and retry acquiring an acquired lock after an
     # interval of 0.1 second.
     sherlock.configure(backend=sherlock.backends.REDIS,
                        expire=None,
                        retry_interval=0.1)
 
-    # Note: configuring Sherlock to use a backend does not limit you from using
+    # Note: configuring sherlock to use a backend does not limit you
     # another backend at the same time. You can import backend specific locks
     # like RedisLock, MCLock and EtcdLock and use them just the same way you
     # use a generic lock (see below). In fact, the generic Lock provided by
-    # Sherlock is just a proxy that uses these specific locks under the hood.
+    # sherlock is just a proxy that uses these specific locks under the hood.
 
     # acquire a lock called my_lock
     lock = Lock('my_lock')
@@ -113,12 +117,22 @@ Basic Usage
     # release the lock
     lock.release()
 
+Support for ``with`` statement
+++++++++++++++++++++++++++++++
+
+.. code-block:: python
+
     # using with statement
     with Lock('my_lock'):
         '''
         do something constructive with your locked resource here
         '''
         pass
+
+Blocking and Non-blocking API
++++++++++++++++++++++++++++++
+
+.. code-block:: python
 
     # acquire non-blocking lock
     lock1 = Lock('my_lock')
@@ -132,6 +146,31 @@ Basic Usage
 
     # try to acquire lock in a blocking way
     lock2.acquire() # blocks until lock is acquired to timeout happens
+
+Using two backends at the same time
++++++++++++++++++++++++++++++++++++
+
+Configuring :mod:`sherlock` to use a backend does not limit you from using
+another backend at the same time. You can import backend specific locks like
+RedisLock, MCLock and EtcdLock and use them just the same way you use a generic
+lock (see below). In fact, the generic Lock provided by :mod:`sherlock` is just
+a proxy that uses these specific locks under the hood.
+
+.. code-block:: python
+
+    import sherlock
+    from sherlock import Lock
+
+    # Configure :mod:`sherlock`'s locks to use Redis as the backend
+    sherlock.configure(backend=sherlock.backends.REDIS)
+
+    # Acquire a lock called my_lock, this lock uses Redis
+    lock = Lock('my_lock')
+
+    # Now acquire locks in Memcached
+    from sherlock import MCLock
+    mclock = MCLock('my_mc_lock')
+    mclock.acquire()
 
 Tests
 -----
