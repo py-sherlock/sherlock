@@ -160,6 +160,7 @@ This parameter's value defaults to ``60 seconds``.
 Example:
 
 >>> import sherlock
+>>> import time
 >>>
 >>> # Configure locks to expire after 2 seconds
 >>> sherlock.configure(expire=2)
