@@ -131,19 +131,32 @@ def configure(**kwargs):
     :param client: global client object to use to connect with backend
                    store. This client object will be used to connect to the
                    backend store by :class:`sherlock.Lock` class instances.
+                   The client object must be a valid object of the client
+                   library. If the backend has been configured using the
+                   `backend` parameter, the custom client object must belong
+                   to the same library that is supported for that backend.
+                   If the backend has not been set, then the custom client
+                   object must be an instance of a valid supported client.
+                   In that case, `sherlock` will set the backend by
+                   introspecting the type of provided client object.
     :param str namespace: provide global namespace
     :param float expire: provide global expiration time. If expicitly set to
                          `None`, lock will not expire.
     :param float timeout: provide global timeout period
     :param float retry_interval: provide global retry interval
 
-    .. note:: the global default client object set using the client parameter
-              will be used only by :class:`sherlock.Lock` instances. Other
-              :ref:`backend-specific-locks` will either use the provided client
-              object at the time of instantiating the lock object or will
-              default to creating a simple client object by themselves for
-              their backend store, which will assume that their backend store
-              is running on localhost.
+    Basic Usage:
+
+    >>> import sherlock
+    >>> from sherlock import Lock
+    >>>
+    >>> # Configure sherlock to use Redis as the backend and the timeout for
+    >>> # acquiring locks equal to 20 seconds.
+    >>> sherlock.configure(timeout=20, backend=sherlock.backends.REDIS)
+    >>>
+    >>> import redis
+    >>> redis_client = redis.StrictClient(host='X.X.X.X', port=6379, db=1)
+    >>> sherlock.configure(client=redis_client)
     '''
 
     _configuration.update(**kwargs)

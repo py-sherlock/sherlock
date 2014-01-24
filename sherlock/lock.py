@@ -41,11 +41,40 @@ class LockTimeoutException(Exception):
 
 
 class BaseLock(object):
-
     '''
     Interface for implementing custom Lock implementations. This class must be
     sub-classed in order to implement a custom Lock with custom logic or
     different backend or both.
+
+    Basic Usage (an example of our imaginary datastore)
+
+    >>> class MyLock(BaseLock):
+    ...     def __init__(self, lock_name, **kwargs):
+    ...         super(MyLock, self).__init__(lock_name, **kwargs)
+    ...         if self.client is None:
+    ...             self.client = mybackend.Client(host='localhost', port=1234)
+    ...         self._owner = None
+    ...
+    ...     def _acquire(self):
+    ...         if self.client.get(self.lock_name) is not None:
+    ...             owner = uuid.uuid4() # or anythin you want
+    ...             self.client.set(self.lock_name, owner)
+    ...             self._owner = owner
+    ...             if self.expire is not None:
+    ...                 self.client.expire(self.lock_name, self.expire)
+    ...             return True
+    ...         return False
+    ...
+    ...     def _release(self):
+    ...         if self._owner is not None:
+    ...             lock_val = self.client.get(self.lock_name)
+    ...             if lock_val == self._owner:
+    ...                 self.client.delete(self.lock_name)
+    ...
+    ...     def _locked(self):
+    ...         if self.client.get(self.lock_name) is not None:
+    ...             return True
+    ...         return False
     '''
 
     def __init__(self,
@@ -136,8 +165,9 @@ class BaseLock(object):
                         time.sleep(self.retry_interval)
                 else:
                     return True
-            raise LockTimeoutException('Timeout elapsed while trying to '
-                                       'acquire Lock.')
+            raise LockTimeoutException('Timeout elapsed after %s seconds '
+                                       'while trying to acquiring '
+                                       'lock.' % self.timeout)
         else:
             return self._acquire()
 
@@ -167,6 +197,46 @@ class Lock(BaseLock):
     '''
     A general lock that inherits global coniguration and provides locks with
     the configured backend.
+
+    .. note:: to use :class:`Lock` class, you must configure the global backend
+              to use a particular backend. If the global backend is not set,
+              calling any method on instances of :class:`Lock` will throw
+              exceptions.
+
+    Basic Usage:
+
+    >>> import sherlock
+    >>> from sherlock import Lock
+    >>>
+    >>> sherlock.configure(sherlock.backends.REDIS)
+    >>>
+    >>> # Create a lock instance
+    >>> lock = Lock('my_lock')
+    >>>
+    >>> # Acquire a lock in Redis running on localhost
+    >>> lock.acquire()
+    True
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    True
+    >>>
+    >>> # Release the acquired lock
+    >>> lock.release()
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    False
+    >>>
+    >>> import redis
+    >>> redis_client = redis.StrictRedis(host='X.X.X.X', port=6379, db=2)
+    >>> sherlock.configure(client=redis_client)
+    >>>
+    >>> # Acquire a lock in Redis running on X.X.X.X:6379
+    >>> lock.acquire()
+    >>>
+    >>> lock.locked()
+    True
     '''
 
     def __init__(self, lock_name, **kwargs):
@@ -233,6 +303,43 @@ class Lock(BaseLock):
 class RedisLock(BaseLock):
     '''
     Implementation of lock with Redis as the backend for synchronization.
+
+    Basic Usage:
+
+    >>> import redis
+    >>> import sherlock
+    >>> from sherlock import RedisLock
+    >>>
+    >>> # Global configuration of defaults
+    >>> sherlock.configure(expire=120, timeout=20)
+    >>>
+    >>> # Create a lock instance
+    >>> lock = RedisLock('my_lock')
+    >>>
+    >>> # Acquire a lock in Redis, global backend and client configuration need
+    >>> # not be configured since we are using a backend specific lock.
+    >>> lock.acquire()
+    True
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    True
+    >>>
+    >>> # Release the acquired lock
+    >>> lock.release()
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    False
+    >>>
+    >>> # Use this client object
+    >>> client = redis.StrictRedis()
+    >>>
+    >>> # Create a lock instance with custom client object
+    >>> lock = RedisLock('my_lock', client=client)
+    >>>
+    >>> # To override the defaults, just past the configurations as parameters
+    >>> lock = RedisLock('my_lock', client=client, expire=1, timeout=5)
     '''
 
     _acquire_script = '''
@@ -318,6 +425,43 @@ class RedisLock(BaseLock):
 class EtcdLock(BaseLock):
     '''
     Implementation of lock with Etcd as the backend for synchronization.
+
+    Basic Usage:
+
+    >>> import etcd
+    >>> import sherlock
+    >>> from sherlock import EtcdLock
+    >>>
+    >>> # Global configuration of defaults
+    >>> sherlock.configure(expire=120, timeout=20)
+    >>>
+    >>> # Create a lock instance
+    >>> lock = EtcdLock('my_lock')
+    >>>
+    >>> # Acquire a lock in Etcd, global backend and client configuration need
+    >>> # not be configured since we are using a backend specific lock.
+    >>> lock.acquire()
+    True
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    True
+    >>>
+    >>> # Release the acquired lock
+    >>> lock.release()
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    False
+    >>>
+    >>> # Use this client object
+    >>> client = etcd.Client()
+    >>>
+    >>> # Create a lock instance with custom client object
+    >>> lock = EtcdLock('my_lock', client=client)
+    >>>
+    >>> # To override the defaults, just past the configurations as parameters
+    >>> lock = EtcdLock('my_lock', client=client, expire=1, timeout=5)
     '''
 
     def __init__(self, lock_name, **kwargs):
@@ -391,6 +535,43 @@ class EtcdLock(BaseLock):
 class MCLock(BaseLock):
     '''
     Implementation of lock with Memcached as the backend for synchronization.
+
+    Basic Usage:
+
+    >>> import pylibmc
+    >>> import sherlock
+    >>> from sherlock import MCLock
+    >>>
+    >>> # Global configuration of defaults
+    >>> sherlock.configure(expire=120, timeout=20)
+    >>>
+    >>> # Create a lock instance
+    >>> lock = MCLock('my_lock')
+    >>>
+    >>> # Acquire a lock in Memcached, global backend and client configuration
+    >>> # need not be configured since we are using a backend specific lock.
+    >>> lock.acquire()
+    True
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    True
+    >>>
+    >>> # Release the acquired lock
+    >>> lock.release()
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    False
+    >>>
+    >>> # Use this client object
+    >>> client = pylibmc.Client(['X.X.X.X'], binary=True)
+    >>>
+    >>> # Create a lock instance with custom client object
+    >>> lock = MCLock('my_lock', client=client)
+    >>>
+    >>> # To override the defaults, just past the configurations as parameters
+    >>> lock = MCLock('my_lock', client=client, expire=1, timeout=5)
     '''
 
     def __init__(self, lock_name, **kwargs):
