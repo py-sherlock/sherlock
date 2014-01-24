@@ -116,6 +116,9 @@ class _Backends(object):
     def valid_backends(self):
         '''
         Return a tuple of valid backends.
+
+        :returns: a list of valid supported backends
+        :rtype: tuple
         '''
 
         return self._valid_backends

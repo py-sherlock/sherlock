@@ -125,6 +125,9 @@ class BaseLock(object):
         '''
         Implementation of method to check if lock has been acquired. Must be
         implemented in the sub-class.
+
+        :returns: if the lock is acquired or not
+        :rtype: bool
         '''
 
         raise NotImplementedError('Must be implemented in the sub-class.')
@@ -133,8 +136,9 @@ class BaseLock(object):
         '''
         Return if the lock has been acquired or not.
 
-        :returns bool: True indicating that a lock has been acquired ot a
-                       shared resource is locked.
+        :returns: True indicating that a lock has been acquired ot a
+                  shared resource is locked.
+        :rtype: bool
         '''
 
         return self._locked
@@ -144,6 +148,9 @@ class BaseLock(object):
         Implementation of acquiring a lock in a non-blocking fashion. Must be
         implemented in the sub-class. :meth:`acquire` makes use of this
         implementation to provide blocking and non-blocking implementations.
+
+        :returns: if the lock was successfully acquired or not
+        :rtype: bool
         '''
 
         raise NotImplementedError('Must be implemented in the sub-class.')
@@ -154,6 +161,8 @@ class BaseLock(object):
 
         :param bool blocking: acquire a lock in a blocking or non-blocking
                               fashion. Defaults to True.
+        :returns: if the lock was successfully acquired or not
+        :rtype: bool
         '''
 
         if blocking is True:
