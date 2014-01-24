@@ -15,7 +15,7 @@ import os
 path = lambda fname: os.path.join(os.path.dirname(__file__), fname)
 
 description = ''
-for file_ in ('README.rst', 'LICENSE.rst', 'CHANGELOG.rst'):
+for file_ in ('README.rst', 'CHANGELOG.rst'):
     with open(path('%s' % file_)) as f:
         description += f.read() + '\n\n'
 
