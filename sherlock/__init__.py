@@ -363,7 +363,7 @@ def configure(**kwargs):
     >>> sherlock.configure(timeout=20, backend=sherlock.backends.REDIS)
     >>>
     >>> import redis
-    >>> redis_client = redis.StrictClient(host='X.X.X.X', port=6379, db=1)
+    >>> redis_client = redis.StrictRedis(host='X.X.X.X', port=6379, db=1)
     >>> sherlock.configure(client=redis_client)
     '''
 
