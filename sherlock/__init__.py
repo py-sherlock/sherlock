@@ -192,6 +192,13 @@ Run tests like so:
 
     python setup.py test
 
+Documentation
+-------------
+
+Available `here`_.
+
+.. _here: http://sher-lock.readthedocs.org
+
 Roadmap
 -------
 
