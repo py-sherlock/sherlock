@@ -36,8 +36,10 @@ setup(
     ],
     zip_safe = False,
     classifiers = [
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 2 - Pre-Alpha',
+        'Intended Audience :: Developers',
         'Operating System :: OS Independent',
+        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
     ],
     test_suite='nose.collector',
