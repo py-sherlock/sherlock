@@ -273,6 +273,9 @@ intersphinx_mapping = {'http://docs.python.org/': None}
 # Document __init__ methods as well
 autoclass_content = 'both'
 
+# Use the old sphinx default theme on RTFD
+RTD_OLD_THEME = True
+
 # Mock libraries that cannot be installed on RTFD
 class Mock(object):
     def __init__(self, *args, **kwargs):
