@@ -12,6 +12,7 @@ Contents
    :maxdepth: 3
 
    api_documentation
+   extending
 
 Indices and tables
 ==================

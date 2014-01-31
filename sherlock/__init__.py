@@ -38,7 +38,7 @@ Features
 * Backend agnostic: supports `Redis`_, `Memcached`_ and `Etcd`_ as choice of
   backends.
 * Extendable: can be easily extended to work with any other of backend of
-  choice by extending base lock class.
+  choice by extending base lock class. Read :ref:`extending`.
 
 .. _Redis: http://redis.io
 .. _Memcached: http://memcached.org
