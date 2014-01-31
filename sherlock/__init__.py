@@ -51,7 +51,8 @@ class _Backends(object):
         MEMCACHED,
     )
 
-    def register(self, **kwargs):
+    def register(self, name, lock_class, library, client_class,
+                 default_args=(), default_kwargs={}):
         '''
         Register a custom backend.
 
@@ -79,15 +80,36 @@ class _Backends(object):
                                     passed to create an instance of the
                                     callable passed to `client_class`
                                     parameter.
+
+        Usage:
+
+        >>> import some_db_client
+        >>> class MyLock(sherlock.lock.BaseLock):
+        ...     # your implementation comes here
+        ...     pass
+        >>>
+        >>> sherlock.configure(name='Mylock',
+        ...                    lock_class=MyLock,
+        ...                    library='some_db_client',
+        ...                    client_class=some_db_client.Client,
+        ...                    default_args=('localhost:1234'),
+        ...                    default_kwargs=dict(connection_pool=6))
         '''
 
-        if not issubclass(kwargs['lock_class'], lock.BaseLock):
+        if not issubclass(lock_class, lock.BaseLock):
             raise ValueError('lock_class parameter must be a sub-class of '
                              'sherlock.lock.BaseLock')
-        setattr(self, kwargs['name'], kwargs)
+        setattr(self, name, {
+            'name': name,
+            'lock_class': lock_class,
+            'library': library,
+            'client_class': client_class,
+            'default_args': default_args,
+            'default_kwargs': default_kwargs,
+        })
 
         valid_backends = list(self._valid_backends)
-        valid_backends.append(getattr(self, kwargs['name']))
+        valid_backends.append(getattr(self, name))
         self._valid_backends = tuple(valid_backends)
 
     @property
