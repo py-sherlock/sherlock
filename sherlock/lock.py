@@ -201,6 +201,12 @@ class BaseLock(object):
     def __exit__(self, exc_type, exc_value, traceback):
         self.release()
 
+    def __del__(self):
+        try:
+            self.release()
+        except LockException, err:
+            pass
+
 
 class Lock(BaseLock):
     '''

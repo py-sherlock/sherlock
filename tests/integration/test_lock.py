@@ -76,6 +76,14 @@ class TestRedisLock(unittest.TestCase):
         lock._release()
         self.assertFalse(lock._locked)
 
+    def test_deleting_lock_object_releases_the_lock(self):
+        lock = sherlock.lock.RedisLock(self.lock_name)
+        lock.acquire()
+        self.assertEqual(self.client.get(self.lock_name), str(lock._owner))
+
+        del lock
+        self.assertEqual(self.client.get(self.lock_name), None)
+
     def tearDown(self):
         self.client.delete(self.lock_name)
         self.client.delete('ns_%s' % self.lock_name)
@@ -143,6 +151,14 @@ class TestEtcdLock(unittest.TestCase):
         lock._release()
         self.assertFalse(lock._locked)
 
+    def test_deleting_lock_object_releases_the_lock(self):
+        lock = sherlock.lock.EtcdLock(self.lock_name)
+        lock.acquire()
+        self.assertEqual(self.client.get(self.lock_name).value, str(lock._owner))
+
+        del lock
+        self.assertRaises(KeyError, self.client.get, self.lock_name)
+
     def tearDown(self):
         try:
             self.client.delete(self.lock_name)
@@ -207,6 +223,14 @@ class TestMCLock(unittest.TestCase):
         self.assertTrue(lock._locked)
         lock._release()
         self.assertFalse(lock._locked)
+
+    def test_deleting_lock_object_releases_the_lock(self):
+        lock = sherlock.lock.MCLock(self.lock_name)
+        lock.acquire()
+        self.assertEqual(self.client.get(self.lock_name), str(lock._owner))
+
+        del lock
+        self.assertEqual(self.client.get(self.lock_name), None)
 
     def tearDown(self):
         self.client.delete(self.lock_name)

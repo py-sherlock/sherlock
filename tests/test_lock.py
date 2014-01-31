@@ -72,6 +72,13 @@ class TestBaseLock(unittest.TestCase):
             pass
         self.assertEqual(lock._acquire.call_count, 6)
 
+    def test_deleting_lock_object_releases_the_lock(self):
+        lock = sherlock.lock.BaseLock('123')
+        release_func = Mock()
+        lock.release = release_func
+        del lock
+        self.assertTrue(release_func.called)
+
 
 class TestLock(unittest.TestCase):
 
