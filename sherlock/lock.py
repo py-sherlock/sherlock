@@ -435,8 +435,8 @@ class RedisLock(BaseLock):
             raise LockException('Lock was not set by this process.')
 
         if self._release_func(keys=[self._key_name, self._owner]) != 1:
-            raise LockException('Lock could not be released because it has '
-                                'not been acquired by this instance.')
+            raise LockException('Lock could not be released because it was '
+                                'not acquired by this instance.')
 
         self._owner = None
 
@@ -548,7 +548,7 @@ class EtcdLock(BaseLock):
                 self._owner = None
             else:
                 raise LockException('Lock could not be released because it '
-                                    'has not been acquired by this instance.')
+                                    'was been acquired by this instance.')
         except KeyError:
             raise LockException('Lock could not be released as it has not '
                                 'been acquired')
@@ -663,7 +663,7 @@ class MCLock(BaseLock):
                 self._owner = None
             else:
                 raise LockException('Lock could not be released because it '
-                                    'has not been acquired by this instance.')
+                                    'was been acquired by this instance.')
         else:
             raise LockException('Lock could not be released as it has not '
                                 'been acquired')
