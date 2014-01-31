@@ -21,18 +21,28 @@ class _Backends(object):
         'library': 'redis',
         'client_class': redis.StrictRedis,
         'lock_class': 'RedisLock',
+        'default_args': (),
+        'default_kwargs': {},
     }
     ETCD = {
         'name': 'ETCD',
         'library': 'etcd',
         'client_class': etcd.Client,
         'lock_class': 'EtcdLock',
+        'default_args': (),
+        'default_kwargs': {},
     }
     MEMCACHED = {
         'name': 'MEMCACHED',
         'library': 'pylibmc',
         'client_class': pylibmc.Client,
         'lock_class': 'MCLock',
+        'default_args': (
+            ['localhost'],
+        ),
+        'default_kwargs': {
+            'binary': True,
+        },
     }
 
     _valid_backends = (
@@ -132,9 +142,13 @@ class _Configuration(object):
     @backend.setter
     def backend(self, val):
         if val not in backends.valid_backends:
+            backend_names = map(lambda x: 'sherlock.backends.%s' % x['name'],
+                                backends.valid_backends)
+            error_str = ', '.join(backend_names[:-1])
+            backend_names = '%s and %s' % (error_str,
+                                           backend_names[-1])
             raise ValueError('Invalid backend. Valid backends are: '
-                             'backends.REDIS, backends.ETCD and '
-                             'backends.MEMCACHED.')
+                             '%s.' % backend_names)
 
         self._backend = val
 
@@ -146,18 +160,12 @@ class _Configuration(object):
             if self.backend is None:
                 raise ValueError('Cannot create a default client object when '
                                  'backend is not configured.')
-            if self.backend == backends.REDIS:
-                self.client = redis.StrictRedis()
-            elif self.backend == backends.ETCD:
-                self.client = etcd.Client()
-            elif self.backend == backends.MEMCACHED:
-                self.client = pylibmc.Client(['localhost'],
-                                             binary=True)
-            else:
-                self.client = self.backend['client_class'](
-                    *self.backend['default_args'],
-                    **self.backend['default_kwargs'])
 
+            for backend in backends.valid_backends:
+                if self.backend == backend:
+                    self.client = self.backend['client_class'](
+                        *self.backend['default_args'],
+                        **self.backend['default_kwargs'])
         return self._client
 
     @client.setter
