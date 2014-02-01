@@ -38,7 +38,7 @@ Features
 * Backend agnostic: supports `Redis`_, `Memcached`_ and `Etcd`_ as choice of
   backends.
 * Extendable: can be easily extended to work with any other of backend of
-  choice by extending base lock class. Read :ref:`extending`.
+  choice by extending base lock class. Read ``extending``.
 
 .. _Redis: http://redis.io
 .. _Memcached: http://memcached.org
@@ -81,7 +81,7 @@ Basic Usage
 -----------
 
 Sherlock is simple to use as at the API and semantics level, it tries to
-conform to standard library's :mod:`threading.Lock` APIs.
+conform to standard library's ``threading.Lock`` APIs.
 
 .. code-block:: python
 
