@@ -1,6 +1,6 @@
 
-Sherlock Distributed Locks with a choice of backend
-===================================================
+Sherlock: Distributed Locks with a choice of backend
+====================================================
 
 Sherlock is a library that provides easy-to-use distributed inter-process
 locks and also allows you to choose a backend of your choice for lock
