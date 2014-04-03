@@ -122,6 +122,12 @@ class TestLock(unittest.TestCase):
         lock.locked()
         self.assertTrue(sherlock.lock.RedisLock.locked.called)
 
+    def test_lock_sets_client_object_on_lock_proxy_when_globally_configured(self):
+        client = etcd.Client(host='8.8.8.8')
+        sherlock.configure(client=client)
+        lock = sherlock.lock.Lock('lock')
+        self.assertEquals(lock._lock_proxy.client, client)
+
 
 class TestRedisLock(unittest.TestCase):
 

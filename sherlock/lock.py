@@ -290,6 +290,7 @@ class Lock(BaseLock):
         if self.client is None:
             self._lock_proxy = None
         else:
+            kwargs.update(client=_configuration.client)
             try:
                 self._lock_proxy = globals()[_configuration.backend['lock_class']](
                     lock_name, **kwargs)
