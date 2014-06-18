@@ -217,3 +217,8 @@ See `LICENSE`_.
 
 .. _LICENSE: http://github.com/vaidik/sherlock/blob/master/LICENSE.rst
 
+Distributed Locking in Other Languages
+--------------------------------------
+
+* NodeJS - https://github.com/thedeveloper/warlock
+
