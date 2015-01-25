@@ -215,6 +215,10 @@ License
 
 See `LICENSE`_.
 
+**In short**: This is an open-source project and exists in the public domain
+for anyone to modify and use it. Just be nice and attribute the credits
+wherever you can. :)
+
 .. _LICENSE: http://github.com/vaidik/sherlock/blob/master/LICENSE.rst
 
 Distributed Locking in Other Languages
