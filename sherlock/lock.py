@@ -526,30 +526,30 @@ class EtcdLock(BaseLock):
     def _acquire(self):
         owner = uuid.uuid4()
 
+        _args = [self._key_name, owner]
+        if self.expire is not None:
+            _args.append(self.expire)
+
         try:
-            self.client.get(self._key_name)
-        except KeyError:
-            _args = [self._key_name, owner]
-            if self.expire is not None:
-                _args.append(self.expire)
-            self.client.set(*tuple(_args))
+            self.client.write(self._key_name, owner,
+                              prevExist=False, ttl=self.expire)
             self._owner = owner
-            return True
-        else:
+        except KeyError:
             return False
+        else:
+            return True
 
     def _release(self):
         if self._owner is None:
             raise LockException('Lock was not set by this process.')
 
         try:
-            resp = self.client.get(self._key_name)
-            if resp.value == str(self._owner):
-                self.client.delete(self._key_name)
-                self._owner = None
-            else:
-                raise LockException('Lock could not be released because it '
-                                    'was been acquired by this instance.')
+            resp = self.client.delete(self._key_name,
+                                      prevValue=str(self._owner))
+            self._owner = None
+        except ValueError:
+            raise LockException('Lock could not be released because it '
+                                'was been acquired by this instance.')
         except KeyError:
             raise LockException('Lock could not be released as it has not '
                                 'been acquired')
