@@ -252,6 +252,7 @@ class _Backends(object):
         'lock_class': 'EtcdLock',
         'default_args': (),
         'default_kwargs': {},
+        'post_configure_func': EtcdLock.start_watcher,
     }
     MEMCACHED = {
         'name': 'MEMCACHED',
@@ -273,7 +274,7 @@ class _Backends(object):
     )
 
     def register(self, name, lock_class, library, client_class,
-                 default_args=(), default_kwargs={}):
+                 default_args=(), default_kwargs={}, post_configure_func=None):
         '''
         Register a custom backend.
 
@@ -327,6 +328,7 @@ class _Backends(object):
             'client_class': client_class,
             'default_args': default_args,
             'default_kwargs': default_kwargs,
+            'post_configure_func': post_configure_func,
         })
 
         valid_backends = list(self._valid_backends)
@@ -425,6 +427,10 @@ class _Configuration(object):
 
         self._backend = val
 
+        # Call post configure func if need be
+        if val.get('post_configure_func') is not None:
+            val['post_configure_func']()
+
     @property
     def client(self):
         if self._client is not None:
@@ -490,12 +496,12 @@ class _Configuration(object):
             setattr(self, key, val)
 
 
+# Import important Lock classes
+from . import lock
+from .lock import *
+
 # Create a backends singleton
 backends = _Backends()
 
 # Create a configuration singleton
 _configuration = _Configuration()
-
-# Import important Lock classes
-from . import lock
-from .lock import *

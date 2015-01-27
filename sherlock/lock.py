@@ -516,6 +516,16 @@ class EtcdLock(BaseLock):
 
         self._owner = None
 
+    @classmethod
+    def start_watcher(cls):
+        if _configuration.client is not None:
+            client = _configuration.client
+        else:
+            client = etcd.Client()
+
+        # Create a watcher
+        pass
+
     @property
     def _key_name(self):
         if self.namespace is not None:
