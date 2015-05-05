@@ -221,6 +221,16 @@ wherever you can. :)
 
 .. _LICENSE: http://github.com/vaidik/sherlock/blob/master/LICENSE.rst
 
+Questions?
+----------
+
+You are encouraged to ask questions using `issues`_ as that helps everyone and
+myself when people with better know-how contribute to the discussion. However,
+if you wish to get in touch with me personally, then I can be contacted at
+**kapoor.vaidik++github+sherlock@gmail.com**.
+
+.. _issues: https://github.com/vaidik/sherlock/issues
+
 Distributed Locking in Other Languages
 --------------------------------------
 
