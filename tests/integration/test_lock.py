@@ -129,13 +129,13 @@ class TestEtcdLock(unittest.TestCase):
         lock = sherlock.EtcdLock(self.lock_name)
         lock._acquire()
         lock._release()
-        self.assertRaises(KeyError, self.client.get, self.lock_name)
+        self.assertRaises(etcd.EtcdKeyNotFound, self.client.get, self.lock_name)
 
     def test_release_with_namespace(self):
         lock = sherlock.EtcdLock(self.lock_name, namespace='ns')
         lock._acquire()
         lock._release()
-        self.assertRaises(KeyError, self.client.get, '/ns/%s' % self.lock_name)
+        self.assertRaises(etcd.EtcdKeyNotFound, self.client.get, '/ns/%s' % self.lock_name)
 
     def test_release_own_only(self):
         lock1 = sherlock.EtcdLock(self.lock_name)
@@ -157,16 +157,16 @@ class TestEtcdLock(unittest.TestCase):
         self.assertEqual(self.client.get(self.lock_name).value, str(lock._owner))
 
         del lock
-        self.assertRaises(KeyError, self.client.get, self.lock_name)
+        self.assertRaises(etcd.EtcdKeyNotFound, self.client.get, self.lock_name)
 
     def tearDown(self):
         try:
             self.client.delete(self.lock_name)
-        except KeyError:
+        except etcd.EtcdKeyNotFound:
             pass
         try:
             self.client.delete('/ns/%s' % self.lock_name)
-        except KeyError:
+        except etcd.EtcdKeyNotFound:
             pass
 
 class TestMCLock(unittest.TestCase):

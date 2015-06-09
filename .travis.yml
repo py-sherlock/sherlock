@@ -3,9 +3,9 @@ python:
   - "2.7"
 
 before_install:
-  - wget https://github.com/coreos/etcd/releases/download/v0.2.0/etcd-v0.2.0-Linux-x86_64.tar.gz
-  - tar -zxvf etcd-v0.2.0-Linux-x86_64.tar.gz
-  - ./etcd-v0.2.0-Linux-x86_64/etcd &
+  - wget https://github.com/coreos/etcd/releases/download/v2.0.11/etcd-v2.0.11-linux-amd64.tar.gz
+  - tar -zxvf etcd-v2.0.11-linux-amd64.tar.gz
+  - ./etcd-v2.0.11-linux-amd64/etcd &
   - sleep 2
 
 install:

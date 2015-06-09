@@ -534,7 +534,7 @@ class EtcdLock(BaseLock):
             self.client.write(self._key_name, owner,
                               prevExist=False, ttl=self.expire)
             self._owner = owner
-        except KeyError:
+        except etcd.EtcdAlreadyExist:
             return False
         else:
             return True
@@ -550,7 +550,7 @@ class EtcdLock(BaseLock):
         except ValueError:
             raise LockException('Lock could not be released because it '
                                 'was been acquired by this instance.')
-        except KeyError:
+        except etcd.EtcdKeyNotFound:
             raise LockException('Lock could not be released as it has not '
                                 'been acquired')
 
@@ -559,7 +559,7 @@ class EtcdLock(BaseLock):
         try:
             self.client.get(self._key_name)
             return True
-        except KeyError:
+        except etcd.EtcdKeyNotFound:
             return False
 
 
