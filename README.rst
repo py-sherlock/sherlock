@@ -24,7 +24,7 @@ Distributed Locks or Mutexes can help you with this. Sherlock provides
 the exact same facility, with some extra goodies. It provides an easy-to-use API
 that resembles standard library's `threading.Lock` semantics.
 
-Apart from this, Sherlock gives you the flexibilty of using a backend of
+Apart from this, Sherlock gives you the flexibility of using a backend of
 your choice for managing locks.
 
 Sherlock also makes it simple for you to extend Sherlock to use
