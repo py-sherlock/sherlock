@@ -204,7 +204,7 @@ class BaseLock(object):
     def __del__(self):
         try:
             self.release()
-        except LockException, err:
+        except LockException:
             pass
 
 
