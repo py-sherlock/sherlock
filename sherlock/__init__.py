@@ -33,7 +33,7 @@ backends that are not supported.
 Features
 ++++++++
 
-* API similar to standard library's `threading.Lock`. 
+* API similar to standard library's `threading.Lock`.
 * Support for With statement, to cleanly acquire and release locks.
 * Backend agnostic: supports `Redis`_, `Memcached`_ and `Etcd`_ as choice of
   backends.
@@ -131,7 +131,7 @@ Blocking and Non-blocking API
     # acquire non-blocking lock
     lock1 = Lock('my_lock')
     lock2 = Lock('my_lock')
-    
+
     # successfully acquire lock1
     lock1.acquire()
 
@@ -483,7 +483,7 @@ class _Configuration(object):
                                      lock if previous attempts failed.
         '''
 
-        for key, val in kwargs.iteritems():
+        for key, val in kwargs.items():
             if key not in dir(self):
                 raise AttributeError('Invalid configuration. No such '
                                      'configuration as %s.' % key)
