@@ -14,7 +14,7 @@ class TestRedisLock(unittest.TestCase):
 
     def setUp(self):
         try:
-            self.client = redis.StrictRedis(host='redis')
+            self.client = redis.StrictRedis(host='redis') 
         except Exception as err:
             print(str(err))
             raise Exception('You must have Redis server running on localhost '
