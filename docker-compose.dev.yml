@@ -1,0 +1,23 @@
+sherlock:
+  build: .
+  dockerfile: Dockerfile
+  links:
+    - etcd:etcd
+    - redis:redis
+    - memcached:memcached
+  volumes:
+    - .:/sherlock:Z
+  entrypoint: coverage run --source=sherlock setup.py test
+  stdin_open: true
+  tty: true
+etcd:
+  build: .
+  dockerfile: Dockerfile-etcd
+  ports:
+    - 2379:2379
+    - 7001:7001
+  entrypoint: /usr/local/etcd/etcd --listen-client-urls='http://0.0.0.0:2379,http://0.0.0.0:4001' --advertise-client-urls='http://localhost:2379,http://localhost:4001'
+redis:
+  image: redis
+memcached:
+  image: memcached
