@@ -24,14 +24,16 @@ class TestRedisLock(unittest.TestCase):
     def test_acquire(self):
         lock = sherlock.RedisLock(self.lock_name, client=self.client)
         self.assertTrue(lock._acquire())
-        self.assertEqual(self.client.get(self.lock_name), str(lock._owner))
+        self.assertEqual(self.client.get(self.lock_name).decode('UTF-8'),
+                         str(lock._owner))
 
     def test_acquire_with_namespace(self):
         lock = sherlock.RedisLock(self.lock_name, client=self.client,
                                   namespace='ns')
         self.assertTrue(lock._acquire())
-        self.assertEqual(self.client.get('ns_%s' % self.lock_name),
-                         str(lock._owner))
+        self.assertEqual(
+            self.client.get('ns_%s' % self.lock_name).decode('UTF-8'),
+            str(lock._owner))
 
     def test_acquire_once_only(self):
         lock1 = sherlock.RedisLock(self.lock_name, client=self.client)
@@ -82,7 +84,8 @@ class TestRedisLock(unittest.TestCase):
     def test_deleting_lock_object_releases_the_lock(self):
         lock = sherlock.lock.RedisLock(self.lock_name, client=self.client)
         lock.acquire()
-        self.assertEqual(self.client.get(self.lock_name), str(lock._owner))
+        self.assertEqual(self.client.get(self.lock_name).decode('UTF-8'),
+                         str(lock._owner))
 
         del lock
         self.assertEqual(self.client.get(self.lock_name), None)

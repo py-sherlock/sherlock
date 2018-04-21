@@ -1,6 +1,6 @@
 sherlock:
   build: .
-  dockerfile: Dockerfile
+  dockerfile: Dockerfile-sherlock-py-$PYTHON_VERSION
   links:
     - etcd:etcd
     - redis:redis
