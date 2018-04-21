@@ -7,7 +7,7 @@ documentation:
 	@(cd docs; make html)
 
 test:
-	python setup.py test
+	sudo docker-compose -f docker-compose.dev.yml run sherlock
 
 doctest:
 	@(cd docs/source; sphinx-build -b doctest . _build/doctest)
