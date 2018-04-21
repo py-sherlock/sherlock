@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 __title__ = 'sherlock'
-__version__ = '.'.join(map(str, (0, 3, 0)))
+__version__ = '.'.join(map(str, (0, 3, 1)))
 __author__ = 'Vaidik Kapoor'
 
 import os
