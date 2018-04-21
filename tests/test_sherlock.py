@@ -9,6 +9,15 @@ import unittest
 from sherlock import _Configuration
 from mock import Mock
 
+# import reload in Python 3
+try:
+    reload
+except NameError:
+    try:
+        from importlib import reload
+    except ModuleNotFoundError:
+        from implib import reload
+
 
 class TestConfiguration(unittest.TestCase):
 
