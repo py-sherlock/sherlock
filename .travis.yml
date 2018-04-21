@@ -1,12 +1,11 @@
 language: python
-python:
-  - "2.7"
-
 env:
-  - DOCKER_COMPOSE_VERSION=1.17.1
+  - PYTHON_VERSION=2.7
+  - PYTHON_VERSION=3
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
+  - export DOCKER_COMPOSE_VERSION=1.17.1
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin

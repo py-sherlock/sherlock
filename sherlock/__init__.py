@@ -415,8 +415,9 @@ class _Configuration(object):
     @backend.setter
     def backend(self, val):
         if val not in backends.valid_backends:
-            backend_names = map(lambda x: 'sherlock.backends.%s' % x['name'],
-                                backends.valid_backends)
+            backend_names = list(map(
+                lambda x: 'sherlock.backends.%s' % x['name'],
+                backends.valid_backends))
             error_str = ', '.join(backend_names[:-1])
             backend_names = '%s and %s' % (error_str,
                                            backend_names[-1])
