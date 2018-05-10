@@ -11,12 +11,12 @@ sherlock:
   stdin_open: true
   tty: true
 etcd:
-  build: .
-  dockerfile: Dockerfile-etcd
+  image: vaidik/etcd
+  command: |
+    etcd --listen-client-urls="http://0.0.0.0:2379,http://0.0.0.0:4001" --advertise-client-urls="http://0.0.0.0:2379,http://0.0.0.0:4001"
   ports:
     - 2379:2379
-    - 7001:7001
-  entrypoint: /usr/local/etcd/etcd --listen-client-urls='http://0.0.0.0:2379,http://0.0.0.0:4001' --advertise-client-urls='http://localhost:2379,http://localhost:4001'
+    - 4001:4001
 redis:
   image: redis
 memcached:
