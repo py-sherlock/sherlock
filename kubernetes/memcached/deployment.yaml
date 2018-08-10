@@ -1,0 +1,19 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: memcached
+  labels:
+    deployment: memcached
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod: memcached
+  template:
+    metadata:
+      labels:
+        pod: memcached
+    spec:
+      containers:
+        - name: memcached
+          image: memcached

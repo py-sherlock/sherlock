@@ -1,0 +1,20 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: etcd
+  labels:
+    deployment: etcd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod: etcd
+  template:
+    metadata:
+      labels:
+        pod: etcd
+    spec:
+      containers:
+        - name: etcd
+          image: docker.io/vaidik/etcd:latest-alpine
+          command: ["etcd", "--listen-client-urls=http://0.0.0.0:2379,http://0.0.0.0:4001", "--advertise-client-urls=http://0.0.0.0:2379,http://0.0.0.0:4001"]

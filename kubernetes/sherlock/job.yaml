@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sherlock-tests
+  labels:
+    deployment: sherlock-tests
+spec:
+  template:
+    metadata:
+      labels:
+        pod: sherlock-tests
+    spec:
+      containers:
+        - name: sherlock-tests
+          image: docker.io/vaidik/sherlock-2.7
+          command: ['python', 'setup.py', 'test']
+          #imagePullPolicy: Never
+          env:
+            - name: REDIS_HOST
+              value: redis
+            - name: ETCD_HOST
+              value: etcd
+            - name: MEMCACHED_HOST
+              value: memcached
+          volumeMounts:
+            - name: sherlock-code
+              mountPath: /sherlock
+      volumes:
+        - name: sherlock-code
+          hostPath:
+            path: /code/sherlock
+      restartPolicy: Never
+  backoffLimit: 1

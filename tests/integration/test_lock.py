@@ -3,6 +3,7 @@
 '''
 
 import etcd
+import os
 import pylibmc
 import redis
 import sherlock
@@ -14,7 +15,7 @@ class TestRedisLock(unittest.TestCase):
 
     def setUp(self):
         try:
-            self.client = redis.StrictRedis(host='redis') 
+            self.client = redis.StrictRedis(host=os.getenv('REDIS_HOST'))
         except Exception as err:
             print(str(err))
             raise Exception('You must have Redis server running on localhost '
@@ -98,7 +99,7 @@ class TestRedisLock(unittest.TestCase):
 class TestEtcdLock(unittest.TestCase):
 
     def setUp(self):
-        self.client = etcd.Client(host='etcd')
+        self.client = etcd.Client(host=os.getenv('ETCD_HOST'))
         self.lock_name = 'test_lock'
 
     def test_acquire(self):
@@ -181,7 +182,8 @@ class TestEtcdLock(unittest.TestCase):
 class TestMCLock(unittest.TestCase):
 
     def setUp(self):
-        self.client = pylibmc.Client(['memcached'], binary=True)
+        self.client = pylibmc.Client([os.getenv('MEMCACHED_HOST')],
+                                     binary=True)
         self.lock_name = 'test_lock'
 
     def test_acquire(self):
