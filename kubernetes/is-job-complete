@@ -1,0 +1,11 @@
+#!/bin/bash
+
+JOB=$1
+
+kubectl get job $JOB \
+    -o jsonpath='{.status.conditions[?(@.type=="Complete")].status}' \
+    | grep True > /dev/null
+rc=$?
+
+echo $rc
+exit $rc

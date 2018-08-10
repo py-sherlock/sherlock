@@ -1,0 +1,17 @@
+#!/bin/bash
+
+KIND=$1
+LABELS_SELECTOR=$2
+
+if [ $# -ne 2 ]; then
+    echo "Pass Kind and Label Selector. For example, ./wait-for.sh pod app=sherlock"
+    exit 1
+fi
+
+JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}';
+
+until kubectl -n default get $KIND -l$LABELS_SELECTOR -o jsonpath="$JSONPATH" | grep 'Ready=True\|Complete=True'; do
+    echo -e "\nWaiting for $KIND to be available"
+    sleep 1
+    kubectl get $KIND -n default
+done

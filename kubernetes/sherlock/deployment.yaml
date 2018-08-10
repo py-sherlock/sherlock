@@ -1,0 +1,29 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: sherlock
+  labels:
+    deployment: sherlock
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod: sherlock
+  template:
+    metadata:
+      labels:
+        pod: sherlock
+    spec:
+      containers:
+        - name: sherlock
+          image: docker.io/vaidik/sherlock-2.7
+          command: ['sleep', '600']
+          #command: ['python', 'setup.py', 'test']
+          #imagePullPolicy: Never
+          volumeMounts:
+            - name: sherlock-code
+              mountPath: /sherlock
+      volumes:
+        - name: sherlock-code
+          hostPath:
+            path: /code/sherlock

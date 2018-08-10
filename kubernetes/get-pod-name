@@ -1,0 +1,10 @@
+#!/bin/bash
+
+LABELS_SELECTOR=$1
+
+if [ $# -ne 1 ]; then
+    echo "Pass Label Selector. For example, ./get-pod-name app=sherlock"
+    exit 1
+fi
+
+kubectl get pods -l$LABELS_SELECTOR -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}'
