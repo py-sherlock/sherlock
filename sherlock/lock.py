@@ -419,7 +419,7 @@ class RedisLock(BaseLock):
         return key
 
     def _acquire(self):
-        owner = uuid.uuid4()
+        owner = str(uuid.uuid4())
         if self.expire is None:
             expire = -1
         else:
