@@ -227,9 +227,9 @@ Distributed Locking in Other Languages
 * NodeJS - https://github.com/thedeveloper/warlock
 '''
 
-import etcd
-import pylibmc
-import redis
+#import etcd
+#import pylibmc
+#import redis
 
 
 class _Backends(object):
@@ -240,7 +240,7 @@ class _Backends(object):
     REDIS = {
         'name': 'REDIS',
         'library': 'redis',
-        'client_class': redis.StrictRedis,
+        #'client_class': redis.StrictRedis,
         'lock_class': 'RedisLock',
         'default_args': (),
         'default_kwargs': {},
@@ -248,7 +248,7 @@ class _Backends(object):
     ETCD = {
         'name': 'ETCD',
         'library': 'etcd',
-        'client_class': etcd.Client,
+        #'client_class': etcd.Client,
         'lock_class': 'EtcdLock',
         'default_args': (),
         'default_kwargs': {},
@@ -256,7 +256,7 @@ class _Backends(object):
     MEMCACHED = {
         'name': 'MEMCACHED',
         'library': 'pylibmc',
-        'client_class': pylibmc.Client,
+        #'client_class': pylibmc.Client,
         'lock_class': 'MCLock',
         'default_args': (
             ['localhost'],
@@ -265,11 +265,18 @@ class _Backends(object):
             'binary': True,
         },
     }
+    CASSANDRA = {
+        'name': 'CASSANDRA',
+        'library': 'pylibmc',
+        'client_class': dict,
+        'default_kwargs': {},
+    }
 
     _valid_backends = (
         REDIS,
         ETCD,
         MEMCACHED,
+        CASSANDRA,
     )
 
     def register(self, name, lock_class, library, client_class,
@@ -498,5 +505,5 @@ backends = _Backends()
 _configuration = _Configuration()
 
 # Import important Lock classes
-from . import lock
-from .lock import *
+#from . import lock
+#from .lock import *

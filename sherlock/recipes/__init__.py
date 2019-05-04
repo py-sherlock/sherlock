@@ -1,0 +1,6 @@
+'''
+    recipes
+    ~~~~~~~
+
+    Generic lock recipes.
+'''
