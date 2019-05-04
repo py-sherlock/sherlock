@@ -92,6 +92,12 @@ class TestLamportLock(unittest.TestCase):
     def setUp(self):
         reload(sherlock)
 
+    def test_not_passing_client_and_backend_should_raise_error(self):
+        def _test():
+            LamportLock('lock')
+
+        self.assertRaises(ValueError, _test)
+
     def test_default_client_for_cassandra(self):
         lock = LamportLock('lock', backend=sherlock.backends.CASSANDRA)
         self.assertTrue(isinstance(
