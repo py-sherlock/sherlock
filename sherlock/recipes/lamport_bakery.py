@@ -28,16 +28,48 @@
 '''
 
 import sherlock
+import time
 
+from Queue import PriorityQueue
 from ..base_lock import BaseLock
 
-
-class KVStore(dict):
-
-    CAPACITY = 3
+_queues = dict()
 
 
-kv = KVStore()
+class LamportQueue(dict):
+
+    def __init__(self, capacity, retry_interval=0.1, timeout=10):
+        self.capacity = capacity
+        self.retry_interval = retry_interval
+        self.timeout = timeout
+        self.order = []
+
+    def acquire(self, name):
+        if len(self.order) == self.capacity:
+            raise Exception('Queue full')
+
+        self.order.append(name)
+
+        timeout = self.timeout
+        locked = False
+        while timeout >= 0:
+            print timeout
+            if self.order.index(name) == 0:
+                locked = True
+                break
+            time.sleep(self.retry_interval)
+            timeout -= self.retry_interval
+
+        if locked is False:
+            self.order.remove(name)
+
+        return locked
+
+    def release(self, name):
+        if self.order[0] == name:
+            self.order.pop(0)
+        else:
+            raise Exception('Not your turn yet')
 
 
 class LamportLock(BaseLock):
@@ -53,6 +85,9 @@ class LamportLock(BaseLock):
 
         backend = kwargs.get('backend')
         client = kwargs.get('client')
+
+        if backend is None and client is None:
+            raise ValueError('Either backend or client must be passed')
 
         if backend is not None and backend not in self.ALLOWED_BACKENDS:
             raise ValueError('%s backend is not supported.' % backend)
@@ -75,14 +110,16 @@ class LamportLock(BaseLock):
             self.client = kwargs['client']
         else:
             # self.client = self.backend['client_class'](
-            self.client = kv
+            if _queues.get(self.lock_name) is None:
+                _queues[self.lock_name] = PriorityQueue(self.CAPACITY)
+            self.client = _queues[self.lock_name]
 
     def _acquire(self):
-        if self.client.get(self.lock_name) is None:
-            self.client[self.lock_name] = True
-            return True
+        self.client.put(self.lock_name, block=False)
+        return True
 
-        return False
+    def _release(self):
+        return self.client.get(block=False)
 
     def __del__(self):
         self.client = dict()
