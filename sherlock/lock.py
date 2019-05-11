@@ -57,7 +57,7 @@ class BaseLock(object):
     ...
     ...     def _acquire(self):
     ...         if self.client.get(self.lock_name) is not None:
-    ...             owner = uuid.uuid4() # or anythin you want
+    ...             owner = str(uuid.uuid4()) # or anythin you want
     ...             self.client.set(self.lock_name, owner)
     ...             self._owner = owner
     ...             if self.expire is not None:
@@ -419,7 +419,7 @@ class RedisLock(BaseLock):
         return key
 
     def _acquire(self):
-        owner = uuid.uuid4()
+        owner = str(uuid.uuid4())
         if self.expire is None:
             expire = -1
         else:
@@ -524,7 +524,7 @@ class EtcdLock(BaseLock):
             return '/%s' % self.lock_name
 
     def _acquire(self):
-        owner = uuid.uuid4()
+        owner = str(uuid.uuid4())
 
         _args = [self._key_name, owner]
         if self.expire is not None:
@@ -641,7 +641,7 @@ class MCLock(BaseLock):
         return key
 
     def _acquire(self):
-        owner = uuid.uuid4()
+        owner = str(uuid.uuid4())
 
         _args = [self._key_name, str(owner)]
         if self.expire is not None:

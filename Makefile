@@ -9,6 +9,9 @@ documentation:
 test:
 	docker-compose -f docker-compose.dev.yml run sherlock
 
+build:
+	docker-compose -f docker-compose.dev.yml build sherlock
+
 up:
 	docker-compose -f docker-compose.dev.yml up -d etcd memcached redis
 	@echo "Run the following command to start a Python shell with sherlock imported: 'make run_sherlock'"
