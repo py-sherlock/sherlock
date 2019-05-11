@@ -7,7 +7,20 @@ documentation:
 	@(cd docs; make html)
 
 test:
-	sudo docker-compose -f docker-compose.dev.yml run sherlock
+	docker-compose -f docker-compose.dev.yml run sherlock
+
+up:
+	docker-compose -f docker-compose.dev.yml up -d etcd memcached redis
+	@echo "Run the following command to start a Python shell with sherlock imported: 'make run_sherlock'"
+
+run_sherlock: up
+	docker-compose -f docker-compose.dev.yml run --entrypoint ipython sherlock
+
+down:
+	docker-compose -f docker-compose.dev.yml down
+
+test:
+	docker-compose -f docker-compose.dev.yml run sherlock
 
 doctest:
 	@(cd docs/source; sphinx-build -b doctest . _build/doctest)
