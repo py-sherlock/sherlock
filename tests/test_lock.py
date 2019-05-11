@@ -102,7 +102,7 @@ class TestLock(unittest.TestCase):
         sherlock._configuration._backend = None
         sherlock._configuration._client = None
         lock = sherlock.lock.Lock('')
-        self.assertEquals(lock._lock_proxy, None)
+        self.assertEqual(lock._lock_proxy, None)
 
         self.assertRaises(sherlock.lock.LockException, lock.acquire)
         self.assertRaises(sherlock.lock.LockException, lock.release)
@@ -135,7 +135,7 @@ class TestLock(unittest.TestCase):
         client = etcd.Client(host='8.8.8.8')
         sherlock.configure(client=client)
         lock = sherlock.lock.Lock('lock')
-        self.assertEquals(lock._lock_proxy.client, client)
+        self.assertEqual(lock._lock_proxy.client, client)
 
 
 class TestRedisLock(unittest.TestCase):
@@ -147,16 +147,16 @@ class TestRedisLock(unittest.TestCase):
     def test_valid_key_names_are_generated_when_namespace_not_set(self):
         name = 'lock'
         lock = sherlock.lock.RedisLock(name)
-        self.assertEquals(lock._key_name, name)
+        self.assertEqual(lock._key_name, name)
 
     def test_valid_key_names_are_generated_when_namespace_is_set(self):
         name = 'lock'
         lock = sherlock.lock.RedisLock(name, namespace='local_namespace')
-        self.assertEquals(lock._key_name, 'local_namespace_%s' % name)
+        self.assertEqual(lock._key_name, 'local_namespace_%s' % name)
 
         sherlock.configure(namespace='global_namespace')
         lock = sherlock.lock.RedisLock(name)
-        self.assertEquals(lock._key_name, 'global_namespace_%s' % name)
+        self.assertEqual(lock._key_name, 'global_namespace_%s' % name)
 
 
 class TestEtcdLock(unittest.TestCase):
@@ -168,16 +168,16 @@ class TestEtcdLock(unittest.TestCase):
     def test_valid_key_names_are_generated_when_namespace_not_set(self):
         name = 'lock'
         lock = sherlock.lock.EtcdLock(name)
-        self.assertEquals(lock._key_name, '/' + name)
+        self.assertEqual(lock._key_name, '/' + name)
 
     def test_valid_key_names_are_generated_when_namespace_is_set(self):
         name = 'lock'
         lock = sherlock.lock.EtcdLock(name, namespace='local_namespace')
-        self.assertEquals(lock._key_name, '/local_namespace/%s' % name)
+        self.assertEqual(lock._key_name, '/local_namespace/%s' % name)
 
         sherlock.configure(namespace='global_namespace')
         lock = sherlock.lock.EtcdLock(name)
-        self.assertEquals(lock._key_name, '/global_namespace/%s' % name)
+        self.assertEqual(lock._key_name, '/global_namespace/%s' % name)
 
 
 class TestMCLock(unittest.TestCase):
@@ -189,13 +189,13 @@ class TestMCLock(unittest.TestCase):
     def test_valid_key_names_are_generated_when_namespace_not_set(self):
         name = 'lock'
         lock = sherlock.lock.MCLock(name)
-        self.assertEquals(lock._key_name, name)
+        self.assertEqual(lock._key_name, name)
 
     def test_valid_key_names_are_generated_when_namespace_is_set(self):
         name = 'lock'
         lock = sherlock.lock.MCLock(name, namespace='local_namespace')
-        self.assertEquals(lock._key_name, 'local_namespace_%s' % name)
+        self.assertEqual(lock._key_name, 'local_namespace_%s' % name)
 
         sherlock.configure(namespace='global_namespace')
         lock = sherlock.lock.MCLock(name)
-        self.assertEquals(lock._key_name, 'global_namespace_%s' % name)
+        self.assertEqual(lock._key_name, 'global_namespace_%s' % name)
