@@ -227,9 +227,7 @@ Distributed Locking in Other Languages
 * NodeJS - https://github.com/thedeveloper/warlock
 '''
 
-import etcd
-import pylibmc
-import redis
+import importlib
 
 
 class _Backends(object):
@@ -240,7 +238,7 @@ class _Backends(object):
     REDIS = {
         'name': 'REDIS',
         'library': 'redis',
-        'client_class': redis.StrictRedis,
+        'module': 'redis',
         'lock_class': 'RedisLock',
         'default_args': (),
         'default_kwargs': {},
@@ -248,7 +246,7 @@ class _Backends(object):
     ETCD = {
         'name': 'ETCD',
         'library': 'etcd',
-        'client_class': etcd.Client,
+        'module': 'etcd',
         'lock_class': 'EtcdLock',
         'default_args': (),
         'default_kwargs': {},
@@ -256,7 +254,7 @@ class _Backends(object):
     MEMCACHED = {
         'name': 'MEMCACHED',
         'library': 'pylibmc',
-        'client_class': pylibmc.Client,
+        'module': 'memcached',
         'lock_class': 'MCLock',
         'default_args': (
             ['localhost'],
@@ -332,6 +330,14 @@ class _Backends(object):
         valid_backends = list(self._valid_backends)
         valid_backends.append(getattr(self, name))
         self._valid_backends = tuple(valid_backends)
+
+    @staticmethod
+    def get_client_class(backend):
+        if 'client_class' in backend:
+            return backend['client_class']
+        else:
+            lock_module = importlib.import_module('.', backend['module'])
+            return lock_module._client_class
 
     @property
     def valid_backends(self):
@@ -424,6 +430,9 @@ class _Configuration(object):
             raise ValueError('Invalid backend. Valid backends are: '
                              '%s.' % backend_names)
 
+        import ipdb; ipdb.set_trace()
+        importlib.import_module(val['module'], '.')
+
         self._backend = val
 
     @property
@@ -437,9 +446,10 @@ class _Configuration(object):
 
             for backend in backends.valid_backends:
                 if self.backend == backend:
-                    self.client = self.backend['client_class'](
-                        *self.backend['default_args'],
-                        **self.backend['default_kwargs'])
+                    self.client = Backends.get_client_class(
+                        self.backend['client_class'])(
+                            *self.backend['default_args'],
+                            **self.backend['default_kwargs'])
         return self._client
 
     @client.setter
