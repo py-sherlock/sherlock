@@ -1,10 +1,16 @@
 from setuptools import setup, find_packages
 
 __title__ = 'sherlock'
-__version__ = '.'.join(map(str, (0, 3, 2)))
+__version__ = '.'.join(map(str, (0, 3, 3)))
 __author__ = 'Vaidik Kapoor'
 
 import os
+
+EXTRAS = {
+    'redis': ['redis'],
+    'etcd': ['python-etcd'],
+    'memcached': ['pylibmc']
+}
 
 # get path of repo files
 path = lambda fname: os.path.join(os.path.dirname(__file__), fname)
@@ -24,11 +30,7 @@ setup(
     platforms=('Any',),
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
-    install_requires=[
-        'redis',
-        'python-etcd',
-        'pylibmc',
-    ],
+    extras_require=EXTRAS,
     zip_safe = False,
     classifiers = [
         'Development Status :: 2 - Pre-Alpha',
