@@ -16,6 +16,9 @@ up:
 	docker-compose -f docker-compose.dev.yml up -d etcd memcached redis
 	@echo "Run the following command to start a Python shell with sherlock imported: 'make run_sherlock'"
 
+run_bash: up
+	docker-compose -f docker-compose.dev.yml run --entrypoint bash sherlock
+
 run_sherlock: up
 	docker-compose -f docker-compose.dev.yml run --entrypoint ipython sherlock
 
