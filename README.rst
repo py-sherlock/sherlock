@@ -8,7 +8,7 @@ synchronization.
 
 |Build Status| |Coverage Status|
 
-.. |Build Status| image:: https://api.travis-ci.org/vaidik/sherlock.png?branch=master
+.. |Build Status| image:: https://travis-ci.org/vaidik/sherlock.png?branch=master
    :target: https://travis-ci.org/vaidik/sherlock/
 .. |Coverage Status| image:: https://coveralls.io/repos/vaidik/incoming/badge.png
    :target: https://coveralls.io/r/vaidik/incoming
