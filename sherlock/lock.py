@@ -370,7 +370,7 @@ class RedisLock(BaseLock):
 
     _acquire_script = '''
     local result = redis.call('SETNX', KEYS[1], KEYS[2])
-    if result == 1 then
+    if result == 1 and KEYS[3] ~= -1 then
         redis.call('EXPIRE', KEYS[1], KEYS[3])
     end
     return result
