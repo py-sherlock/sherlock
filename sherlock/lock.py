@@ -11,10 +11,15 @@ __all__ = [
     'Lock',
     'RedisLock',
     'EtcdLock',
-    'MCLock'
+    'MCLock',
+    'KubernetesLock'
 ]
 
+import datetime
 import etcd
+import kubernetes.client
+import kubernetes.client.exceptions
+import kubernetes.config
 import pylibmc
 import redis
 import time
@@ -672,3 +677,196 @@ class MCLock(BaseLock):
     @property
     def _locked(self):
         return True if self.client.get(self._key_name) is not None else False
+
+
+class KubernetesLock(BaseLock):
+    '''
+    Implementation of lock with Kubernetes resource as the backend for synchronization.
+
+    Basic Usage:
+
+    >>> import sherlock
+    >>> from sherlock import KubernetesLock
+    >>>
+    >>> # Global configuration of defaults
+    >>> sherlock.configure(expire=120, timeout=20)
+    >>>
+    >>> # Create a lock instance
+    >>> lock = KubernetesLock(
+    ...     'my_lock', 'my_namespace', group='', version='v1', resource='configmaps',
+    ... )
+    >>>
+    >>> # Acquire a lock in Kubernetes, global backend and client configuration need
+    >>> # not be configured since we are using a backend specific lock.
+    >>> lock.acquire()
+    True
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    True
+    >>>
+    >>> # Release the acquired lock
+    >>> lock.release()
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    False
+    >>>
+    >>> # To override the defaults, just past the configurations as parameters
+    >>> lock = KubernetesLock(
+    ...     'my_lock', 'my_namespace', expire=1, timeout=5,
+    ... )
+    >>>
+    >>> # Acquire a lock using the with_statement
+    >>> with KubernetesLock('my_lock', 'my_namespace') as lock:
+    ...     # do some stuff with your acquired resource
+    ...     pass
+    '''
+
+    def __init__(
+        self,
+        lock_name: str,
+        k8s_namespace: str,
+        **kwargs,
+    ) -> None:
+        '''
+        :param str lock_name: name of the lock to uniquely identify the lock
+                              between processes.
+        :param str k8s_namespace: Kubernetes namespace to store the lock in.
+        :param str namespace: Namespace to namespace lock keys for
+                              your application in order to avoid conflicts.
+        :param float expire: set lock expiry time. If explicitly set to `None`,
+                             lock will not expire.
+        :param float timeout: set timeout to acquire lock
+        :param float retry_interval: set interval for trying acquiring lock
+                                     after the timeout interval has elapsed.
+        :param client: supported client object for the backend of your choice.
+        '''
+
+        super(KubernetesLock, self).__init__(lock_name, **kwargs)
+
+        self.k8s_namespace = k8s_namespace
+        if self.client is None:
+            kubernetes.config.load_config()
+            self.client = kubernetes.client.CoordinationV1Api()
+
+        self._owner = None
+
+    @property
+    def _key_name(self):
+        if self.namespace is not None:
+            key = '%s-%s' % (self.namespace, self.lock_name)
+        else:
+            key = self.lock_name
+        return key.replace('_', '-')
+
+    def _get_lease_expiry_time(self, lease: kubernetes.client.V1Lease) -> datetime:
+        # Determine whether the Lease has exired.
+        if lease.spec.renew_time is not None and lease.spec.lease_duration_seconds is not None:
+            return lease.spec.renew_time + datetime.timedelta(seconds=lease.spec.lease_duration_seconds)
+        elif lease.spec.lease_duration_seconds is None:
+            return datetime.datetime.max
+        return datetime.datetime.min
+
+    def _acquire(self):
+        name = self._key_name
+        owner = self._owner or str(uuid.uuid4())
+
+        try:
+            lease = self.client.read_namespaced_lease(
+                name=name, namespace=self.k8s_namespace
+            )
+        except kubernetes.client.exceptions.ApiException as exc:
+            if exc.reason == 'Not Found':
+                now = datetime.datetime.now(tz=datetime.timezone.utc)
+                lease = self.client.create_namespaced_lease(
+                    namespace=self.k8s_namespace,
+                    body=kubernetes.client.V1Lease(
+                        metadata=kubernetes.client.V1ObjectMeta(
+                            name=name,
+                        ),
+                        spec=kubernetes.client.V1LeaseSpec(
+                            holder_identity=owner,
+                            acquire_time=now,
+                            renew_time=now,
+                            lease_duration_seconds=self.expire,
+                        ),
+                    ),
+                )
+                self._owner = owner
+                return True
+            raise LockException('Could not read or create Lock.') from exc
+
+        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        if owner == lease.spec.holder_identity:
+            # Same owner renew lease.
+            lease.spec.renew_time = now
+            lease.spec.lease_duration_seconds = self.expire
+        elif now < self._get_lease_expiry_time(lease):
+            # Lease has not expired.
+            return False
+
+        # Different owner and lease has expired so acquire lease.
+        lease.spec.holder_identity = owner
+        lease.spec.acquire_time = now
+        lease.spec.renew_time = now
+        lease.spec.lease_duration_seconds = self.expire
+
+        try:
+            lease = self.client.replace_namespaced_lease(
+                name=name,
+                namespace=self.k8s_namespace,
+                body=lease,
+            )
+        except kubernetes.client.exceptions.ApiException as exc:
+            if exc.reason == 'Conflict':
+                return False
+            raise Lock('Failed to update Lock.') from exc
+        self._owner = owner
+        return True
+
+    def _release(self):
+        if self._owner is None:
+            raise LockException('Lock was not set by this process.')
+
+        name = self._key_name
+        try:
+            lease = self.client.read_namespaced_lease(
+                name=name,
+                namespace=self.k8s_namespace,
+            )
+            if self._owner == lease.spec.holder_identity:
+                self.client.delete_namespaced_lease(
+                    name=name,
+                    namespace=self.k8s_namespace,
+                    body=kubernetes.client.V1DeleteOptions(
+                        preconditions=kubernetes.client.V1Preconditions(
+                            resource_version=lease.metadata.resource_version
+                        )
+                    )
+                )
+        except kubernetes.client.exceptions.ApiException as exc:
+            if exc.reason in ('Not Found', 'Conflict'):
+                # The Lease was acquired by another instance and may have
+                # already been removed by that instance.
+                raise LockException(
+                    'Lock could not be released because it was '
+                    'no longer held by this instance.'
+                ) from exc
+            raise exc
+
+    @property
+    def _locked(self):
+        try:
+            lease = self.client.read_namespaced_lease(
+                name=self._key_name,
+                namespace=self.k8s_namespace,
+            )
+        except kubernetes.client.exceptions.ApiException as exc:
+            if exc.reason == 'Not Found':
+                return False
+            raise exc
+
+        if datetime.datetime.now(tz=datetime.timezone.utc) > self._get_lease_expiry_time(lease):
+            return False
+        return True
