@@ -1,7 +1,6 @@
 language: python
 env:
-  - PYTHON_VERSION=2.7
-  - PYTHON_VERSION=3
+  - PYTHON_VERSION=3.7
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
