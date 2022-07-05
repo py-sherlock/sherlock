@@ -198,3 +198,28 @@ class TestMCLock(unittest.TestCase):
         sherlock.configure(namespace='global_namespace')
         lock = sherlock.lock.MCLock(name)
         self.assertEqual(lock._key_name, 'global_namespace_%s' % name)
+
+
+class TestKubernetesLock(unittest.TestCase):
+
+    def setUp(self):
+        reload(sherlock)
+        reload(sherlock.lock)
+
+    def test_valid_key_names_are_generated_when_namespace_not_set(self):
+        name = 'lock'
+        k8s_namespace = 'default'
+        lock = sherlock.lock.KubernetesLock(name, k8s_namespace, client=Mock())
+        self.assertEqual(lock._key_name, name)
+
+    def test_valid_key_names_are_generated_when_namespace_is_set(self):
+        name = 'lock'
+        k8s_namespace = 'default'
+        lock = sherlock.lock.KubernetesLock(
+            name, k8s_namespace, client=Mock(), namespace='local_namespace',
+        )
+        self.assertEqual(lock._key_name, 'local-namespace-%s' % name)
+
+        sherlock.configure(namespace='global_namespace')
+        lock = sherlock.lock.KubernetesLock(name, k8s_namespace, client=Mock())
+        self.assertEqual(lock._key_name, 'global-namespace-%s' % name)
