@@ -230,6 +230,7 @@ Distributed Locking in Other Languages
 import etcd
 import pylibmc
 import redis
+import kubernetes.client
 
 
 class _Backends(object):
@@ -265,11 +266,20 @@ class _Backends(object):
             'binary': True,
         },
     }
+    KUBERNETES = {
+        'name': 'KUBERNETES',
+        'library': 'kubernetes',
+        'client_class': kubernetes.client.CoordinationV1Api,
+        'lock_class': 'KubernetesLock',
+        'default_args': (),
+        'default_kwargs': {},
+    }
 
     _valid_backends = (
         REDIS,
         ETCD,
         MEMCACHED,
+        KUBERNETES,
     )
 
     def register(self, name, lock_class, library, client_class,
