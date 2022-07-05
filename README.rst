@@ -33,7 +33,7 @@ backends that are not supported.
 Features
 ++++++++
 
-* API similar to standard library's `threading.Lock`. 
+* API similar to standard library's `threading.Lock`.
 * Support for With statement, to cleanly acquire and release locks.
 * Backend agnostic: supports `Redis`_, `Memcached`_ and `Etcd`_ as choice of
   backends.
@@ -43,6 +43,7 @@ Features
 .. _Redis: http://redis.io
 .. _Memcached: http://memcached.org
 .. _Etcd: http://github.com/coreos/etcd
+.. _Kubernetes : https://kubernetes.io
 
 Supported Backends and Client Libraries
 +++++++++++++++++++++++++++++++++++++++
@@ -52,10 +53,12 @@ Following client libraries are supported for every supported backend:
 * Redis: `redis-py`_
 * Memcached: `pylibmc`_
 * Etcd: `python-etcd`_
+* Kubernetes `kubernetes`_
 
 .. _redis-py: http://github.com
 .. _pylibmc: http://github.com
 .. _python-etcd: https://github.com/jplana/python-etcd
+.. _kubernetes: https://github.com/kubernetes-client/python
 
 As of now, only the above mentioned libraries are supported. Although
 Sherlock takes custom client objects so that you can easily provide
@@ -131,7 +134,7 @@ Blocking and Non-blocking API
     # acquire non-blocking lock
     lock1 = Lock('my_lock')
     lock2 = Lock('my_lock')
-    
+
     # successfully acquire lock1
     lock1.acquire()
 
