@@ -1,23 +1,55 @@
-sherlock:
-  build: .
-  dockerfile: Dockerfile-sherlock-py-$PYTHON_VERSION
-  links:
-    - etcd:etcd
-    - redis:redis
-    - memcached:memcached
-  volumes:
-    - .:/sherlock:Z
-  entrypoint: coverage run --source=sherlock setup.py test
-  stdin_open: true
-  tty: true
-etcd:
-  image: vaidik/etcd
-  command: |
-    etcd --listen-client-urls="http://0.0.0.0:2379,http://0.0.0.0:4001" --advertise-client-urls="http://0.0.0.0:2379,http://0.0.0.0:4001"
-  ports:
-    - 2379:2379
-    - 4001:4001
-redis:
-  image: redis
-memcached:
-  image: memcached
+version: '3'
+
+services:
+  sherlock:
+    build:
+      context: .
+      dockerfile: Dockerfile-sherlock-py-$PYTHON_VERSION
+    links:
+      - etcd:etcd
+      - redis:redis
+      - memcached:memcached
+      - kubernetes:kubernetes
+    environment:
+      - KUBECONFIG=/sherlock/kubeconfig.yaml
+    volumes:
+      - .:/sherlock:Z
+    entrypoint: coverage run --source=sherlock setup.py test
+    stdin_open: true
+    tty: true
+  etcd:
+    image: quay.io/coreos/etcd
+    command: |
+      etcd --listen-client-urls="http://0.0.0.0:2379,http://0.0.0.0:4001" --advertise-client-urls="http://0.0.0.0:2379,http://0.0.0.0:4001"
+    ports:
+      - 2379:2379
+      - 4001:4001
+  redis:
+    image: redis
+  memcached:
+    image: memcached
+  kubernetes:
+    image: rancher/k3s
+    command: server
+    tmpfs:
+      - /run
+      - /var/run
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    privileged: true
+    environment:
+      - K3S_TOKEN=13521885930989
+      - K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml
+      - K3S_KUBECONFIG_MODE=666
+    volumes:
+      - k3s-server:/var/lib/rancher/k3s
+      # This is just so that we get the kubeconfig file out
+      # - .:/output
+    ports:
+      - 6443:6443  # Kubernetes API Server
+
+volumes:
+  k3s-server: {}
