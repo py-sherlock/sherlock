@@ -26,6 +26,7 @@ setup(
     include_package_data=True,
     python_requires='>=3.7',
     install_requires=[
+        'kubernetes',
         'redis',
         'python-etcd',
         'pylibmc',
