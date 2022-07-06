@@ -6,8 +6,7 @@ import etcd
 import redis
 import sherlock
 import unittest
-
-from mock import Mock
+from unittest.mock import Mock
 
 # import reload in Python 3
 try:

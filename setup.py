@@ -38,9 +38,4 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
     ],
-    test_suite='nose.collector',
-    tests_require=[
-        'nose',
-        'mock',
-    ]
 )
