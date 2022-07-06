@@ -338,16 +338,13 @@ class TestKubernetesLock(unittest.TestCase):
 
         now = lock._now() - datetime.timedelta(seconds=10)
         lease = kubernetes.client.V1Lease(
-            metadata=kubernetes.client.V1ObjectMeta(
-                name=name,
-                namespace=k8s_namespace
-            ),
+            metadata=kubernetes.client.V1ObjectMeta(name=name, namespace=k8s_namespace),
             spec=kubernetes.client.V1LeaseSpec(
                 acquire_time=now,
                 holder_identity='test-identity',
                 lease_duration_seconds=1,
                 renew_time=now,
-            )
+            ),
         )
 
         # Mock the client to reproduce the scenario where we try to acquire
@@ -372,16 +369,13 @@ class TestKubernetesLock(unittest.TestCase):
 
         now = lock._now() - datetime.timedelta(seconds=10)
         lease = kubernetes.client.V1Lease(
-            metadata=kubernetes.client.V1ObjectMeta(
-                name=name,
-                namespace=k8s_namespace
-            ),
+            metadata=kubernetes.client.V1ObjectMeta(name=name, namespace=k8s_namespace),
             spec=kubernetes.client.V1LeaseSpec(
                 acquire_time=now,
                 holder_identity='test-identity',
                 lease_duration_seconds=1,
                 renew_time=now,
-            )
+            ),
         )
 
         # Mock the client to reproduce the scenario where we try to acquire
@@ -411,16 +405,13 @@ class TestKubernetesLock(unittest.TestCase):
 
         now = lock._now() - datetime.timedelta(seconds=10)
         lease = kubernetes.client.V1Lease(
-            metadata=kubernetes.client.V1ObjectMeta(
-                name=name,
-                namespace=k8s_namespace
-            ),
+            metadata=kubernetes.client.V1ObjectMeta(name=name, namespace=k8s_namespace),
             spec=kubernetes.client.V1LeaseSpec(
                 acquire_time=now,
                 holder_identity=lock._owner,
                 lease_duration_seconds=1,
                 renew_time=now,
-            )
+            ),
         )
 
         # Mock the client to reproduce the scenario where we try to release
@@ -447,16 +438,13 @@ class TestKubernetesLock(unittest.TestCase):
 
         now = lock._now() - datetime.timedelta(seconds=10)
         lease = kubernetes.client.V1Lease(
-            metadata=kubernetes.client.V1ObjectMeta(
-                name=name,
-                namespace=k8s_namespace
-            ),
+            metadata=kubernetes.client.V1ObjectMeta(name=name, namespace=k8s_namespace),
             spec=kubernetes.client.V1LeaseSpec(
                 acquire_time=now,
                 holder_identity=lock._owner,
                 lease_duration_seconds=1,
                 renew_time=now,
-            )
+            ),
         )
 
         # Mock the client to reproduce the scenario where we try to release

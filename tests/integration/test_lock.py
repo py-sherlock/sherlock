@@ -262,7 +262,6 @@ class TestMCLock(unittest.TestCase):
 
 
 class TestKubernetesLock(unittest.TestCase):
-
     def setUp(self):
         kubernetes.config.load_config()
         self.client = kubernetes.client.CoordinationV1Api()
@@ -270,8 +269,7 @@ class TestKubernetesLock(unittest.TestCase):
         self.k8s_namespace = 'default'
 
     def test_acquire(self):
-        lock = sherlock.KubernetesLock(
-            self.lock_name, self.k8s_namespace)
+        lock = sherlock.KubernetesLock(self.lock_name, self.k8s_namespace)
         self.assertTrue(lock._acquire())
         lease = self.client.read_namespaced_lease(
             name=self.lock_name,
@@ -293,10 +291,8 @@ class TestKubernetesLock(unittest.TestCase):
         self.assertEqual(lease.spec.holder_identity, str(lock._owner))
 
     def test_acquire_once_only(self):
-        lock1 = sherlock.KubernetesLock(
-            self.lock_name, self.k8s_namespace)
-        lock2 = sherlock.KubernetesLock(
-            self.lock_name, self.k8s_namespace)
+        lock1 = sherlock.KubernetesLock(self.lock_name, self.k8s_namespace)
+        lock2 = sherlock.KubernetesLock(self.lock_name, self.k8s_namespace)
         self.assertTrue(lock1._acquire())
         self.assertFalse(lock2._acquire())
 
@@ -368,8 +364,7 @@ class TestKubernetesLock(unittest.TestCase):
         self.assertTrue(lock.locked())
 
     def test_release(self):
-        lock = sherlock.KubernetesLock(
-            self.lock_name, self.k8s_namespace)
+        lock = sherlock.KubernetesLock(self.lock_name, self.k8s_namespace)
         lock._acquire()
         lock._release()
         with self.assertRaises(kubernetes.client.exceptions.ApiException) as cm:

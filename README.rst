@@ -52,15 +52,10 @@ Supported Backends and Client Libraries
 Following client libraries are supported for every supported backend:
 
 * File: `pathlib <https://docs.python.org/3/library/pathlib.html>`__
-* Redis: `redis-py`_
-* Memcached: `pylibmc`_
-* Etcd: `python-etcd`_
-* Kubernetes: `kubernetes`_
-
-.. _redis-py: http://github.com
-.. _pylibmc: http://github.com
-.. _python-etcd: https://github.com/jplana/python-etcd
-.. __kubernetes: https://github.com/kubernetes-client/python
+* Redis: `redis-py <https://github.com/redis/redis-py/tree/master/redis>`__
+* Memcached: `pylibmc <https://github.com/lericson/pylibmc>`__
+* Etcd: `python-etcd <https://github.com/jplana/python-etcd>`__
+* Kubernetes: `kubernetes <https://github.com/kubernetes-client/python>`__
 
 As of now, only the above mentioned libraries are supported. Although
 Sherlock takes custom client objects so that you can easily provide
