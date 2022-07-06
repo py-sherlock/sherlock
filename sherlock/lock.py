@@ -840,7 +840,7 @@ class KubernetesLock(BaseLock):
         except kubernetes.client.exceptions.ApiException as exc:
             if exc.reason == 'Conflict':
                 return None
-            raise Lock('Failed to update Lock.') from exc
+            raise LockException('Failed to update Lock.') from exc
 
     def _delete_lease(self, lease: kubernetes.client.V1Lease) -> None:
         try:
