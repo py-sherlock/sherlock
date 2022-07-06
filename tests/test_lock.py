@@ -216,10 +216,50 @@ class TestKubernetesLock(unittest.TestCase):
         name = 'lock'
         k8s_namespace = 'default'
         lock = sherlock.lock.KubernetesLock(
-            name, k8s_namespace, client=Mock(), namespace='local_namespace',
+            name, k8s_namespace, client=Mock(), namespace='local-namespace',
         )
         self.assertEqual(lock._key_name, 'local-namespace-%s' % name)
 
-        sherlock.configure(namespace='global_namespace')
+        sherlock.configure(namespace='global-namespace')
         lock = sherlock.lock.KubernetesLock(name, k8s_namespace, client=Mock())
         self.assertEqual(lock._key_name, 'global-namespace-%s' % name)
+
+    def test_exception_raised_when_invalid_names_set(self):
+        test_cases = [
+            (
+                'lock_name',
+                'my-k8s-namespace',
+                'my-namespace',
+                'lock_name must conform to RFC1123\'s definition of a DNS label for KubernetesLock'
+            ),
+            (
+                'lock-name',
+                'my_k8s_namespace',
+                'my-namespace',
+                'k8s_namespace must conform to RFC1123\'s definition of a DNS label for KubernetesLock'),
+            (
+                'lock-name',
+                'my-k8s-namespace',
+                'my_namespace',
+                'namespace must conform to RFC1123\'s definition of a DNS label for KubernetesLock'
+            ),
+        ]
+        for lock_name, k8s_namespace, namespace, err_msg in test_cases:
+            with self.assertRaises(ValueError) as cm:
+                sherlock.lock.KubernetesLock(
+                    lock_name,
+                    k8s_namespace,
+                    client=Mock(),
+                    namespace=namespace,
+                )
+            self.assertEqual(cm.exception.args[0], err_msg)
+
+            sherlock.configure(namespace=namespace)
+            with self.assertRaises(ValueError) as cm:
+                sherlock.lock.KubernetesLock(
+                    lock_name,
+                    k8s_namespace,
+                    client=Mock(),
+                    namespace=namespace,
+                )
+            self.assertEqual(cm.exception.args[0], err_msg)

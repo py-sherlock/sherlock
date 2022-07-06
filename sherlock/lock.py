@@ -742,10 +742,19 @@ class KubernetesLock(BaseLock):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         '''
-
-        super(KubernetesLock, self).__init__(lock_name, **kwargs)
+        super().__init__(lock_name, **kwargs)
 
         self.k8s_namespace = k8s_namespace
+
+        # Verify that all names are compatible with Kubernetes.
+        rfc_1123_dns_label = re.compile('^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{,63}(?<!-)$')
+        err_msg = '{} must conform to RFC1123\'s definition of a DNS label for KubernetesLock'
+        for attr in ('lock_name', 'k8s_namespace', 'namespace'):
+            value = getattr(self, attr)
+            if value is not None:
+                if rfc_1123_dns_label.match(getattr(self, attr)) is None:
+                    raise ValueError(err_msg.format(attr))
+
         if self.client is None:
             kubernetes.config.load_config()
             self.client = kubernetes.client.CoordinationV1Api()
@@ -758,7 +767,7 @@ class KubernetesLock(BaseLock):
             key = '%s-%s' % (self.namespace, self.lock_name)
         else:
             key = self.lock_name
-        return key.replace('_', '-')
+        return key
 
     def _get_lease_expiry_time(self, lease: kubernetes.client.V1Lease) -> datetime:
         # Determine whether the Lease has exired.

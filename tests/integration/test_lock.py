@@ -262,7 +262,7 @@ class TestKubernetesLock(unittest.TestCase):
     def setUp(self):
         kubernetes.config.load_config()
         self.client = kubernetes.client.CoordinationV1Api()
-        self.lock_name = 'test_lock'
+        self.lock_name = 'test-lock'
         self.k8s_namespace = 'default'
 
     def test_acquire(self):
