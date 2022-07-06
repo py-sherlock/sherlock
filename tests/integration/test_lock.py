@@ -306,6 +306,21 @@ class TestKubernetesLock(unittest.TestCase):
         time.sleep(2)
         self.assertFalse(lock.locked())
 
+    def test_acquire_check_expire_is_not_set(self):
+        lock = sherlock.KubernetesLock(
+            self.lock_name,
+            self.k8s_namespace,
+            expire=None,
+        )
+        lock.acquire()
+        time.sleep(2)
+        lease = self.client.read_namespaced_lease(
+            name=self.lock_name,
+            namespace=self.k8s_namespace,
+        )
+        self.assertIsNone(lease.spec.lease_duration_seconds)
+        self.assertTrue(lock.locked())
+
     def test_release(self):
         lock = sherlock.KubernetesLock(
             self.lock_name, self.k8s_namespace)

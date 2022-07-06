@@ -787,7 +787,7 @@ class KubernetesLock(BaseLock):
             )
         elif lease.spec.lease_duration_seconds is None:
             expiry_time = datetime.datetime.max
-        return now > expiry_time
+        return now > expiry_time.astimezone(tz=datetime.timezone.utc)
 
     def _create_lease(
         self,
