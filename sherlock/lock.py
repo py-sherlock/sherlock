@@ -860,7 +860,7 @@ class KubernetesLock(BaseLock):
                 return None
             raise LockException('Failed to release Lock.') from exc
 
-    def _now(self) -> datetime:
+    def _now(self) -> datetime.datetime:
         return datetime.datetime.now(tz=datetime.timezone.utc)
 
     def _acquire(self) -> bool:
