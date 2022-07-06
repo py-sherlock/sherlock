@@ -694,11 +694,9 @@ class KubernetesLock(BaseLock):
     >>> sherlock.configure(expire=120, timeout=20)
     >>>
     >>> # Create a lock instance
-    >>> lock = KubernetesLock(
-    ...     'my_lock', 'my_namespace', group='', version='v1', resource='configmaps',
-    ... )
+    >>> lock = KubernetesLock('my_lock', 'my_namespace')
     >>>
-    >>> # Acquire a lock in Kubernetes, global backend and client configuration need
+    >>> # To acquire a lock in Kubernetes, global backend and client configuration need
     >>> # not be configured since we are using a backend specific lock.
     >>> lock.acquire()
     True
