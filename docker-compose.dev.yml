@@ -6,11 +6,11 @@ sherlock:
     - memcached:memcached
   volumes:
     - .:/sherlock:Z
-  entrypoint: coverage run --source=sherlock setup.py test
+  entrypoint: bash -c 'pip install -e . && coverage run --source=sherlock -m pytest tests/'
   stdin_open: true
   tty: true
 etcd:
-  image: vaidik/etcd
+  image: quay.io/coreos/etcd
   command: |
     etcd --listen-client-urls="http://0.0.0.0:2379,http://0.0.0.0:4001" --advertise-client-urls="http://0.0.0.0:2379,http://0.0.0.0:4001"
   ports:
