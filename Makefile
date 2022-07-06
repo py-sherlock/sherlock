@@ -13,7 +13,7 @@ build:
 	docker-compose -f docker-compose.dev.yml build sherlock
 
 up:
-	docker-compose -f docker-compose.dev.yml up -d etcd memcached redis
+	docker-compose -f docker-compose.dev.yml up -d etcd memcached redis kubernetes
 	@echo "Run the following command to start a Python shell with sherlock imported: 'make run_sherlock'"
 
 run_sherlock: up

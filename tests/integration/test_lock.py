@@ -2,7 +2,11 @@
     Integration tests for backend locks.
 '''
 
+from unittest.mock import patch
 import etcd
+import kubernetes.client
+import kubernetes.client.exceptions
+import kubernetes.config
 import os
 import pylibmc
 import redis
@@ -252,3 +256,203 @@ class TestMCLock(unittest.TestCase):
     def tearDown(self):
         self.client.delete(self.lock_name)
         self.client.delete('ns_%s' % self.lock_name)
+
+
+class TestKubernetesLock(unittest.TestCase):
+
+    def setUp(self):
+        kubernetes.config.load_config()
+        self.client = kubernetes.client.CoordinationV1Api()
+        self.lock_name = 'test-lock'
+        self.k8s_namespace = 'default'
+
+    def test_acquire(self):
+        lock = sherlock.KubernetesLock(
+            self.lock_name, self.k8s_namespace)
+        self.assertTrue(lock._acquire())
+        lease = self.client.read_namespaced_lease(
+            name=self.lock_name,
+            namespace=self.k8s_namespace,
+        )
+        self.assertEqual(lease.spec.holder_identity, str(lock._owner))
+
+    def test_acquire_with_namespace(self):
+        lock = sherlock.KubernetesLock(
+            self.lock_name,
+            self.k8s_namespace,
+            namespace='ns',
+        )
+        self.assertTrue(lock._acquire())
+        lease = self.client.read_namespaced_lease(
+            name=f'ns-{self.lock_name}',
+            namespace=self.k8s_namespace,
+        )
+        self.assertEqual(lease.spec.holder_identity, str(lock._owner))
+
+    def test_acquire_once_only(self):
+        lock1 = sherlock.KubernetesLock(
+            self.lock_name, self.k8s_namespace)
+        lock2 = sherlock.KubernetesLock(
+            self.lock_name, self.k8s_namespace)
+        self.assertTrue(lock1._acquire())
+        self.assertFalse(lock2._acquire())
+
+    def test_acquire_check_expiry(self):
+        lock = sherlock.KubernetesLock(
+            self.lock_name,
+            self.k8s_namespace,
+            expire=1,
+        )
+        lock.acquire()
+        time.sleep(2)
+        self.assertFalse(lock.locked())
+
+    def test_acquire_expired_lock(self):
+        lock = sherlock.KubernetesLock(
+            self.lock_name,
+            self.k8s_namespace,
+            expire=1,
+        )
+        lock.acquire()
+        lease_1 = self.client.read_namespaced_lease(
+            name=self.lock_name,
+            namespace=self.k8s_namespace,
+        )
+        time.sleep(2)
+
+        # We can acquire the Lock again after it
+        # expires.
+        self.assertTrue(lock.acquire())
+
+        lease_2 = self.client.read_namespaced_lease(
+            name=self.lock_name,
+            namespace=self.k8s_namespace,
+        )
+
+        # New Lease has new owner and new owner is not the same
+        # as old owner.
+        self.assertEqual(lease_2.spec.holder_identity, str(lock._owner))
+        self.assertNotEqual(
+            lease_1.spec.holder_identity,
+            lease_2.spec.holder_identity,
+        )
+
+    @patch('sherlock.lock.uuid.uuid4')
+    def test_acquire_owner_collison(self, mock_uuid4):
+        mock_uuid4.return_value = b'fake-uuid'
+
+        lock = sherlock.KubernetesLock(
+            self.lock_name,
+            self.k8s_namespace,
+            expire=None,
+        )
+        self.assertTrue(lock.acquire())
+        self.assertFalse(lock.acquire(blocking=False))
+
+    def test_acquire_check_expire_is_not_set(self):
+        lock = sherlock.KubernetesLock(
+            self.lock_name,
+            self.k8s_namespace,
+            expire=None,
+        )
+        lock.acquire()
+        time.sleep(2)
+        lease = self.client.read_namespaced_lease(
+            name=self.lock_name,
+            namespace=self.k8s_namespace,
+        )
+        self.assertIsNone(lease.spec.lease_duration_seconds)
+        self.assertTrue(lock.locked())
+
+    def test_release(self):
+        lock = sherlock.KubernetesLock(
+            self.lock_name, self.k8s_namespace)
+        lock._acquire()
+        lock._release()
+        with self.assertRaises(kubernetes.client.exceptions.ApiException) as cm:
+            self.client.read_namespaced_lease(
+                name=self.lock_name,
+                namespace=self.k8s_namespace,
+            )
+        self.assertEqual(cm.exception.reason, 'Not Found')
+
+    def test_release_with_namespace(self):
+        lock = sherlock.KubernetesLock(
+            self.lock_name,
+            self.k8s_namespace,
+            namespace='ns',
+        )
+        lock._acquire()
+        lock._release()
+        # self.assertEqual(self.client.get('ns_%s' % self.lock_name), None)
+
+    def test_release_own_only(self):
+        lock1 = sherlock.KubernetesLock(self.lock_name, self.k8s_namespace)
+        lock2 = sherlock.KubernetesLock(self.lock_name, self.k8s_namespace)
+        lock1._acquire()
+        self.assertRaises(sherlock.LockException, lock2._release)
+        lock1._release()
+
+    def test_locked(self):
+        lock = sherlock.KubernetesLock(self.lock_name, self.k8s_namespace)
+        lock._acquire()
+        self.assertTrue(lock._locked)
+        lock._release()
+        self.assertFalse(lock._locked)
+
+    def test_deleting_lock_object_releases_the_lock(self):
+        lock = sherlock.KubernetesLock(
+            self.lock_name,
+            self.k8s_namespace,
+        )
+        lock.acquire()
+        lease = self.client.read_namespaced_lease(
+            name=self.lock_name,
+            namespace=self.k8s_namespace,
+        )
+        self.assertEqual(lease.spec.holder_identity, str(lock._owner))
+
+        del lock
+        with self.assertRaises(kubernetes.client.exceptions.ApiException) as cm:
+            self.client.read_namespaced_lease(
+                name=self.lock_name,
+                namespace=self.k8s_namespace,
+            )
+        self.assertEqual(cm.exception.reason, 'Not Found')
+
+    def test_release_lock_that_no_longer_exists(self):
+        lock_1 = sherlock.KubernetesLock(
+            self.lock_name,
+            self.k8s_namespace,
+            expire=1,
+        )
+        lock_2 = sherlock.KubernetesLock(
+            self.lock_name,
+            self.k8s_namespace,
+        )
+        self.assertTrue(lock_1.acquire())
+        # Wait for Lock to expire
+        time.sleep(2)
+        self.assertTrue(lock_2.acquire())
+        lock_2.release()
+
+        # Releasing a Lock has been removed should be fine.
+        self.assertIsNone(lock_1.release())
+
+    def tearDown(self):
+        try:
+            self.client.delete_namespaced_lease(
+                name=self.lock_name,
+                namespace=self.k8s_namespace,
+            )
+        except kubernetes.client.exceptions.ApiException as exc:
+            if exc.reason != 'Not Found':
+                raise exc
+        try:
+            self.client.delete_namespaced_lease(
+                name=f'ns-{self.lock_name}',
+                namespace=self.k8s_namespace,
+            )
+        except kubernetes.client.exceptions.ApiException as exc:
+            if exc.reason != 'Not Found':
+                raise exc
