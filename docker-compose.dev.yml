@@ -10,7 +10,7 @@ services:
       - memcached:memcached
     volumes:
       - .:/sherlock:Z
-    entrypoint: bash -c 'pip install -e . && pytest --cov-report term --cov-report xml tests/'
+    entrypoint: bash -c 'pip install -e . && pytest --cov sherlock --cov-report term tests/'
     stdin_open: true
     tty: true
   etcd:
