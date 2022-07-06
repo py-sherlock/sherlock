@@ -471,3 +471,27 @@ class TestKubernetesLock(unittest.TestCase):
             'Failed to release Lock.',
             lock.release,
         )
+
+
+class TestFileLock(unittest.TestCase):
+    def setUp(self):
+        reload(sherlock)
+        reload(sherlock.lock)
+
+    def test_valid_key_names_are_generated_when_namespace_not_set(self):
+        name = 'lock'
+        lock = sherlock.lock.FileLock(name, client=Mock())
+        self.assertEqual(lock._key_name, name)
+
+    def test_valid_key_names_are_generated_when_namespace_is_set(self):
+        name = 'lock'
+        lock = sherlock.lock.FileLock(
+            name,
+            client=Mock(),
+            namespace='local_namespace',
+        )
+        self.assertEqual(lock._key_name, 'local_namespace_%s' % name)
+
+        sherlock.configure(namespace='global_namespace')
+        lock = sherlock.lock.FileLock(name, client=Mock())
+        self.assertEqual(lock._key_name, 'global_namespace_%s' % name)

@@ -12,14 +12,18 @@ __all__ = [
     'RedisLock',
     'EtcdLock',
     'MCLock',
-    'KubernetesLock'
+    'KubernetesLock',
+    'FileLock',
 ]
 
 import datetime
 import etcd
+import filelock
+import json
 import kubernetes.client
 import kubernetes.client.exceptions
 import kubernetes.config
+import pathlib
 import pylibmc
 import re
 import redis
@@ -932,3 +936,160 @@ class KubernetesLock(BaseLock):
             return False
         # Lease exists and has not expired.
         return True
+
+
+class FileLock(BaseLock):
+    '''
+    Implementation of lock with the file system as the backend for synchronization.
+
+    Basic Usage:
+
+    >>> import sherlock
+    >>> from sherlock import FileLock
+    >>>
+    >>> # Global configuration of defaults
+    >>> sherlock.configure(expire=120, timeout=20)
+    >>>
+    >>> # Create a lock instance
+    >>> lock = FileLock('my_lock')
+    >>>
+    >>> # To acquire a lock global backend and client configuration need
+    >>> # not be configured since we are using a backend specific lock.
+    >>> lock.acquire()
+    True
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    True
+    >>>
+    >>> # Release the acquired lock
+    >>> lock.release()
+    >>>
+    >>> # Check if the lock has been acquired
+    >>> lock.locked()
+    False
+    >>>
+    >>> # To override the defaults, just past the configurations as parameters
+    >>> lock = FileLock(
+    ...     'my_lock', expire=1, timeout=5,
+    ... )
+    >>>
+    >>> # Acquire a lock using the with_statement
+    >>> with FileLock('my_lock') as lock:
+    ...     # do some stuff with your acquired resource
+    ...     pass
+    '''
+
+    def __init__(self, lock_name: str, **kwargs) -> None:
+        '''
+        :param str lock_name: name of the lock to uniquely identify the lock
+                              between processes.
+        :param str namespace: Namespace to namespace lock keys for
+                              your application in order to avoid conflicts.
+        :param float expire: set lock expiry time. If explicitly set to `None`,
+                             lock will not expire.
+        :param float timeout: set timeout to acquire lock
+        :param float retry_interval: set interval for trying acquiring lock
+                                     after the timeout interval has elapsed.
+        :param client: supported client object for the backend of your choice.
+        '''
+        super().__init__(lock_name, **kwargs)
+
+        if self.client is None:
+            self.client = pathlib.Path('/tmp/sherlock')
+        self.client.mkdir(parents=True, exist_ok=True)
+
+        self._owner = None
+
+    @property
+    def _key_name(self):
+        if self.namespace is not None:
+            key = '%s_%s' % (self.namespace, self.lock_name)
+        else:
+            key = self.lock_name
+        return key
+
+    def _now(self) -> datetime.datetime:
+        return datetime.datetime.now(tz=datetime.timezone.utc)
+
+    def _expiry_time(self) -> str:
+        expiry_time = datetime.datetime.max.astimezone(datetime.timezone.utc)
+        if self.expire is not None:
+            expiry_time = self._now() + datetime.timedelta(seconds=self.expire)
+        return expiry_time.isoformat()
+
+    def _has_expired(self, data: dict, now: datetime.datetime) -> datetime:
+        expiry_time = datetime.datetime.fromisoformat(data['expiry_time'])
+        return now > expiry_time.astimezone(tz=datetime.timezone.utc)
+
+    @property
+    def _lock_file(self) -> pathlib.Path:
+        return (self.client / self._key_name).with_suffix('.lock')
+
+    @property
+    def _data_file(self) -> pathlib.Path:
+        return (self.client / self._key_name).with_suffix('.json')
+
+    def _acquire(self) -> bool:
+        owner = str(uuid.uuid4())
+
+        # Make sure we have unique lock on the file.
+        with filelock.FileLock(self._lock_file):
+            if self._data_file.exists():
+                with self._data_file.open('r') as f:
+                    data = json.load(f)
+
+                now = self._now()
+                has_expired = self._has_expired(data, now)
+                if owner != data['owner']:
+                    if not has_expired:
+                        # Someone else holds the lock.
+                        return False
+
+                    else:
+                        # Lock is available for us to take.
+                        data = {'owner': owner, 'expiry_time': self._expiry_time()}
+
+                else:
+                    # Same owner so do not set or modify Lease.
+                    return False
+            else:
+                data = {'owner': owner, 'expiry_time': self._expiry_time()}
+
+            # Write new data back to file.
+            self._data_file.touch()
+            with self._data_file.open('w') as f:
+                json.dump(data, f)
+
+            # We succeeded in writing to the file so we now hold the lock.
+            self._owner = owner
+            return True
+
+    def _release(self) -> None:
+        if self._owner is None:
+            raise LockException('Lock was not set by this process.')
+
+        with filelock.FileLock(self._lock_file):
+            if self._data_file.exists():
+                with self._data_file.open('r') as f:
+                    data = json.load(f)
+
+                if self._owner == data['owner']:
+                    self._data_file.unlink()
+
+    @property
+    def _locked(self):
+        with filelock.FileLock(self._lock_file):
+            if self._data_file.exists():
+                with self._data_file.open('r') as f:
+                    data = json.load(f)
+
+                if self._has_expired(data, self._now()):
+                    # File exists but has expired.
+                    return False
+
+                # Lease exists and has not expired.
+                return True
+
+            # File doesn't exist so can't be locked.
+            return False
