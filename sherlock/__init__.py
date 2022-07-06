@@ -228,6 +228,7 @@ Distributed Locking in Other Languages
 '''
 
 import etcd
+import pathlib
 import pylibmc
 import redis
 import kubernetes.client
@@ -274,12 +275,21 @@ class _Backends(object):
         'default_args': (),
         'default_kwargs': {},
     }
+    FILE = {
+        'name': 'FILE',
+        'library': 'pathlib',
+        'client_class': pathlib.Path,
+        'lock_class': 'FileLock',
+        'default_args': ('/tmp/sherlock',),
+        'default_kwargs': {},
+    }
 
     _valid_backends = (
         REDIS,
         ETCD,
         MEMCACHED,
         KUBERNETES,
+        FILE,
     )
 
     def register(self, name, lock_class, library, client_class,

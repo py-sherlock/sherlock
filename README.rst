@@ -36,7 +36,7 @@ Features
 
 * API similar to standard library's `threading.Lock`.
 * Support for With statement, to cleanly acquire and release locks.
-* Backend agnostic: supports `Redis`_, `Memcached`_, `Etcd`_, and `Kubernetes`_ as choice of
+* Backend agnostic: supports File, `Redis`_, `Memcached`_, `Etcd`_, and `Kubernetes`_ as choice of
   backends.
 * Extendable: can be easily extended to work with any other of backend of
   choice by extending base lock class. Read ``extending``.
@@ -51,6 +51,7 @@ Supported Backends and Client Libraries
 
 Following client libraries are supported for every supported backend:
 
+* File: `pathlib <https://docs.python.org/3/library/pathlib.html>`__
 * Redis: `redis-py`_
 * Memcached: `pylibmc`_
 * Etcd: `python-etcd`_
