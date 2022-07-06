@@ -430,11 +430,8 @@ class TestKubernetesLock(unittest.TestCase):
             kubernetes.client.exceptions.ApiException(reason='Not Found')
         )
 
-        self.assertRaisesRegex(
-            sherlock.lock.LockException,
-            'Lock could not be released because it was no longer held by this instance.',
-            lock.release,
-        )
+        # This should return without issue.
+        self.assertIsNone(lock.release())
 
     @patch('sherlock.lock.kubernetes.client.CoordinationV1Api')
     def test_release_delete_failed(self, mock_client):
@@ -469,4 +466,8 @@ class TestKubernetesLock(unittest.TestCase):
             kubernetes.client.exceptions.ApiException(reason='Unexpected')
         )
 
-        self.assertRaises(kubernetes.client.exceptions.ApiException, lock.release)
+        self.assertRaisesRegex(
+            sherlock.lock.LockException,
+            'Failed to release Lock.',
+            lock.release,
+        )

@@ -855,12 +855,10 @@ class KubernetesLock(BaseLock):
             )
         except kubernetes.client.exceptions.ApiException as exc:
             if exc.reason == 'Not Found':
-                # The Lease has already been removed.
-                raise LockException(
-                    'Lock could not be released because it was '
-                    'no longer held by this instance.'
-                ) from exc
-            raise exc
+                # The Lease has already been acquired by another
+                # instance which is fine.
+                return None
+            raise LockException('Failed to release Lock.') from exc
 
     def _now(self) -> datetime:
         return datetime.datetime.now(tz=datetime.timezone.utc)
@@ -916,15 +914,7 @@ class KubernetesLock(BaseLock):
             raise LockException('Lock was not set by this process.')
 
         lease = self._get_lease()
-        if lease is None:
-            # Lease does not exist. It may have expired and then been acquired
-            # and released by someone else.
-            raise LockException(
-                'Lock could not be released because it was '
-                'no longer held by this instance.'
-            )
-
-        if self._owner == lease.spec.holder_identity:
+        if lease is not None and self._owner == lease.spec.holder_identity:
             # The Lease object contains a `.metadata.resource_version` which
             # protects us from race conditions in deleting the Lease.
             self._delete_lease(lease)

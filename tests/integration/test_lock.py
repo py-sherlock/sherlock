@@ -436,12 +436,8 @@ class TestKubernetesLock(unittest.TestCase):
         self.assertTrue(lock_2.acquire())
         lock_2.release()
 
-        # Releasing a Lock has been removed raises exception.
-        self.assertRaisesRegex(
-            sherlock.lock.LockException,
-            'Lock could not be released because it was no longer held by this instance.',
-            lock_1.release,
-        )
+        # Releasing a Lock has been removed should be fine.
+        self.assertIsNone(lock_1.release())
 
     def tearDown(self):
         try:
