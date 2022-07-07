@@ -263,7 +263,10 @@ class TestMCLock(unittest.TestCase):
 
 class TestKubernetesLock(unittest.TestCase):
     def setUp(self):
-        kubernetes.config.load_config()
+        kubernetes.config.load_kube_config(
+            config_file=os.environ['KUBECONFIG'],
+        )
+        kubernetes.config.load_config
         self.client = kubernetes.client.CoordinationV1Api()
         self.lock_name = 'test-lock'
         self.k8s_namespace = 'default'
