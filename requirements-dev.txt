@@ -1,0 +1,6 @@
+tox
+# `tox-docker` with support for `privileged` and `command`
+# https://github.com/tox-dev/tox-docker/pull/138
+# https://github.com/tox-dev/tox-docker/pull/139
+git+https://github.com/judahrand/tox-docker.git@judah
+tox-gh-actions
