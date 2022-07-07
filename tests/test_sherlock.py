@@ -5,9 +5,10 @@
 import etcd
 import sherlock
 import unittest
+from unittest.mock import Mock
+
 
 from sherlock import _Configuration
-from mock import Mock
 
 # import reload in Python 3
 try:
