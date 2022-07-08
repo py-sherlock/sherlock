@@ -1,0 +1,52 @@
+[tool]
+
+[tool.poetry]
+name = "sherlock"
+version = "0.3.2"
+description = "Distributed inter-process locks with a choice of backend"
+license =  "MIT"
+authors = [
+    "Vaidik Kapoor <kapoor.vaidik@gmail.com>",
+]
+maintainers = [
+    "Vaidik Kapoor <kapoor.vaidik@gmail.com>",
+    "Judah Rand <17158624+judahrand@users.noreply.github.com>",
+]
+readme = "README.rst"
+homepage = "https://github.com/py-sherlock/sherlock"
+repository = "https://github.com/py-sherlock/sherlock"
+keywords = ["locking"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+packages = [
+    { include = "sherlock" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+filelock = "^3.7.1"
+kubernetes = "^24.2.0"
+redis = "^4.3.4"
+python-etcd = "^0.4.5"
+pylibmc = "^1.6.1"
+
+[tool.poetry.dev-dependencies]
+tox = "^3.25.1"
+tox-docker = { git = "https://github.com/judahrand/tox-docker.git", branch = "judah" }
+tox-gh-actions = "^2.9.1"
+tox-poetry = "^0.4.1"
+pytest = "^7.1.2"
+pytest-cov = "^3.0.0"
+
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

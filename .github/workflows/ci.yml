@@ -30,20 +30,22 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install Poetry
+        run: pipx install poetry
+
       - name: Setup Python ${{ matrix.py }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.py }}
-          cache: pip
-          cache-dependency-path: requirements-dev.txt
-
-      - name: Install Dev requirements
-        run: pip install -r requirements-dev.txt
+          cache: 'poetry'
 
       - name: Install `libmemcached-dev`
         run: sudo apt-get install -y libmemcached-dev
 
+      - name: Install sherlock
+        run: poetry install
+
       - name: Run tests
-        run: tox
+        run: poetry run tox
 
       - uses: codecov/codecov-action@v3
