@@ -645,7 +645,9 @@ class MCLock(BaseLock):
         try:
             import pylibmc
         except ImportError as exc:
-            raise ImportError("Please install `sherlock` with `memcached` extras.") from exc
+            raise ImportError(
+                "Please install `sherlock` with `memcached` extras."
+            ) from exc
 
         super(MCLock, self).__init__(lock_name, **kwargs)
 
@@ -765,7 +767,9 @@ class KubernetesLock(BaseLock):
             import kubernetes.client.exceptions
             import kubernetes.config
         except ImportError as exc:
-            raise ImportError("Please install `sherlock` with `kubernetes` extras.") from exc
+            raise ImportError(
+                "Please install `sherlock` with `kubernetes` extras."
+            ) from exc
 
         super().__init__(lock_name, **kwargs)
 
@@ -1015,7 +1019,9 @@ class FileLock(BaseLock):
         try:
             import filelock
         except ImportError as exc:
-            raise ImportError("Please install `sherlock` with `filelock` extras.") from exc
+            raise ImportError(
+                "Please install `sherlock` with `filelock` extras."
+            ) from exc
 
         super().__init__(lock_name, **kwargs)
 
