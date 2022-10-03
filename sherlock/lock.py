@@ -566,11 +566,11 @@ class EtcdLock(BaseLock):
         except ValueError:
             raise LockException(
                 "Lock could not be released because it "
-                "was been acquired by this instance."
+                "was not acquired by this instance."
             )
         except etcd.EtcdKeyNotFound:
             raise LockException(
-                "Lock could not be released as it has not " "been acquired"
+                "Lock could not be released as it has not been acquired"
             )
 
     @property

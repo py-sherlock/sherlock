@@ -8,11 +8,11 @@ synchronization.
 
 |Build Status| |Coverage Status|
 
-.. |Build Status| image:: https://github.com/judahrand/sherlock/actions/workflows/ci.yml/badge.svg
-   :target: https://github.com/judahrand/sherlock/actions?query=workflow%3ACI/CD
+.. |Build Status| image:: https://github.com/py-sherlock/sherlock/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/py-sherlock/sherlock/actions?query=workflow%3ACI/CD
 
-.. |Coverage Status| image:: https://codecov.io/gh/judahrand/sherlock/branch/master/graph/badge.svg?token=QJXCZVSAEF
- :target: https://codecov.io/gh/judahrand/sherlock
+.. |Coverage Status| image:: https://codecov.io/gh/py-sherlock/sherlock/branch/master/graph/badge.svg?token=QJXCZVSAEF
+ :target: https://codecov.io/gh/py-sherlock/sherlock
 
 Overview
 --------

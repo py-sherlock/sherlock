@@ -4,23 +4,13 @@
 
 import datetime
 import unittest
+from importlib import reload
 from unittest.mock import Mock, patch
 
 import etcd
 import kubernetes.client
 import kubernetes.client.exceptions
-import redis
-
 import sherlock
-
-# import reload in Python 3
-try:
-    reload
-except NameError:
-    try:
-        from importlib import reload
-    except ModuleNotFoundError:
-        from implib import reload
 
 
 class TestBaseLock(unittest.TestCase):

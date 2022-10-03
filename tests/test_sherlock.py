@@ -3,21 +3,13 @@
 """
 
 import unittest
+from importlib import reload
 from unittest.mock import Mock
 
 import etcd
 
 import sherlock
 from sherlock import _Configuration
-
-# import reload in Python 3
-try:
-    reload
-except NameError:
-    try:
-        from importlib import reload
-    except ModuleNotFoundError:
-        from implib import reload
 
 
 class TestConfiguration(unittest.TestCase):
