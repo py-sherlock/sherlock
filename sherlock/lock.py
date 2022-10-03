@@ -24,14 +24,6 @@ import time
 import typing
 import uuid
 
-import etcd
-import filelock
-import kubernetes.client
-import kubernetes.client.exceptions
-import kubernetes.config
-import pylibmc
-import redis
-
 from . import _configuration, backends
 
 
@@ -416,6 +408,10 @@ class RedisLock(BaseLock):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        try:
+            import redis
+        except ImportError as exc:
+            raise ImportError("Please install `sherlock` with `redis` extras.") from exc
 
         super(RedisLock, self).__init__(lock_name, **kwargs)
 
@@ -526,6 +522,10 @@ class EtcdLock(BaseLock):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        try:
+            import etcd
+        except ImportError as exc:
+            raise ImportError("Please install `sherlock` with `etcd` extras.") from exc
 
         super(EtcdLock, self).__init__(lock_name, **kwargs)
 
@@ -642,6 +642,10 @@ class MCLock(BaseLock):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        try:
+            import pylibmc
+        except ImportError as exc:
+            raise ImportError("Please install `sherlock` with `memcached` extras.") from exc
 
         super(MCLock, self).__init__(lock_name, **kwargs)
 
@@ -756,6 +760,13 @@ class KubernetesLock(BaseLock):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        try:
+            import kubernetes.client
+            import kubernetes.client.exceptions
+            import kubernetes.config
+        except ImportError as exc:
+            raise ImportError("Please install `sherlock` with `kubernetes` extras.") from exc
+
         super().__init__(lock_name, **kwargs)
 
         self.k8s_namespace = k8s_namespace
@@ -1001,6 +1012,11 @@ class FileLock(BaseLock):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        try:
+            import filelock
+        except ImportError as exc:
+            raise ImportError("Please install `sherlock` with `filelock` extras.") from exc
+
         super().__init__(lock_name, **kwargs)
 
         if self.client is None:
