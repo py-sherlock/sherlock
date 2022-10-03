@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch
 import etcd
 import kubernetes.client
 import kubernetes.client.exceptions
+
 import sherlock
 
 
