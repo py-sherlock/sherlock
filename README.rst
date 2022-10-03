@@ -51,7 +51,7 @@ Supported Backends and Client Libraries
 
 Following client libraries are supported for every supported backend:
 
-* File: `pathlib <https://docs.python.org/3/library/pathlib.html>`__
+* File: `filelock <https://github.com/tox-dev/py-filelock>`__
 * Redis: `redis-py <https://github.com/redis/redis-py/tree/master/redis>`__
 * Memcached: `pylibmc <https://github.com/lericson/pylibmc>`__
 * Etcd: `python-etcd <https://github.com/jplana/python-etcd>`__
