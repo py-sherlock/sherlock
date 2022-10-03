@@ -1,0 +1,25 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - master
+  pull_request: {}
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      PYTHON_VERSION: 3.7
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup test infrastructure
+        run: make up
+
+      - name: Run tests
+        run: make test
+
+      - uses: codecov/codecov-action@v3
