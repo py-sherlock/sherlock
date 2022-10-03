@@ -1,4 +1,4 @@
-'''
+"""
 Sherlock: Distributed Locks with a choice of backend
 ====================================================
 
@@ -225,7 +225,7 @@ Distributed Locking in Other Languages
 --------------------------------------
 
 * NodeJS - https://github.com/thedeveloper/warlock
-'''
+"""
 
 import pathlib
 
@@ -236,53 +236,51 @@ import redis
 
 
 class _Backends(object):
-    '''
+    """
     A simple object that provides a list of available backends.
-    '''
+    """
 
     REDIS = {
-        'name': 'REDIS',
-        'library': 'redis',
-        'client_class': redis.StrictRedis,
-        'lock_class': 'RedisLock',
-        'default_args': (),
-        'default_kwargs': {},
+        "name": "REDIS",
+        "library": "redis",
+        "client_class": redis.StrictRedis,
+        "lock_class": "RedisLock",
+        "default_args": (),
+        "default_kwargs": {},
     }
     ETCD = {
-        'name': 'ETCD',
-        'library': 'etcd',
-        'client_class': etcd.Client,
-        'lock_class': 'EtcdLock',
-        'default_args': (),
-        'default_kwargs': {},
+        "name": "ETCD",
+        "library": "etcd",
+        "client_class": etcd.Client,
+        "lock_class": "EtcdLock",
+        "default_args": (),
+        "default_kwargs": {},
     }
     MEMCACHED = {
-        'name': 'MEMCACHED',
-        'library': 'pylibmc',
-        'client_class': pylibmc.Client,
-        'lock_class': 'MCLock',
-        'default_args': (
-            ['localhost'],
-        ),
-        'default_kwargs': {
-            'binary': True,
+        "name": "MEMCACHED",
+        "library": "pylibmc",
+        "client_class": pylibmc.Client,
+        "lock_class": "MCLock",
+        "default_args": (["localhost"],),
+        "default_kwargs": {
+            "binary": True,
         },
     }
     KUBERNETES = {
-        'name': 'KUBERNETES',
-        'library': 'kubernetes',
-        'client_class': kubernetes.client.CoordinationV1Api,
-        'lock_class': 'KubernetesLock',
-        'default_args': (),
-        'default_kwargs': {},
+        "name": "KUBERNETES",
+        "library": "kubernetes",
+        "client_class": kubernetes.client.CoordinationV1Api,
+        "lock_class": "KubernetesLock",
+        "default_args": (),
+        "default_kwargs": {},
     }
     FILE = {
-        'name': 'FILE',
-        'library': 'pathlib',
-        'client_class': pathlib.Path,
-        'lock_class': 'FileLock',
-        'default_args': ('/tmp/sherlock',),
-        'default_kwargs': {},
+        "name": "FILE",
+        "library": "pathlib",
+        "client_class": pathlib.Path,
+        "lock_class": "FileLock",
+        "default_args": ("/tmp/sherlock",),
+        "default_kwargs": {},
     }
 
     _valid_backends = (
@@ -293,9 +291,16 @@ class _Backends(object):
         FILE,
     )
 
-    def register(self, name, lock_class, library, client_class,
-                 default_args=(), default_kwargs={}):
-        '''
+    def register(
+        self,
+        name,
+        lock_class,
+        library,
+        client_class,
+        default_args=(),
+        default_kwargs={},
+    ):
+        """
         Register a custom backend.
 
         :param str name: Name of the backend by which you would want to refer
@@ -336,19 +341,24 @@ class _Backends(object):
         ...                    client_class=some_db_client.Client,
         ...                    default_args=('localhost:1234'),
         ...                    default_kwargs=dict(connection_pool=6))
-        '''
+        """
 
         if not issubclass(lock_class, lock.BaseLock):
-            raise ValueError('lock_class parameter must be a sub-class of '
-                             'sherlock.lock.BaseLock')
-        setattr(self, name, {
-            'name': name,
-            'lock_class': lock_class,
-            'library': library,
-            'client_class': client_class,
-            'default_args': default_args,
-            'default_kwargs': default_kwargs,
-        })
+            raise ValueError(
+                "lock_class parameter must be a sub-class of " "sherlock.lock.BaseLock"
+            )
+        setattr(
+            self,
+            name,
+            {
+                "name": name,
+                "lock_class": lock_class,
+                "library": library,
+                "client_class": client_class,
+                "default_args": default_args,
+                "default_kwargs": default_kwargs,
+            },
+        )
 
         valid_backends = list(self._valid_backends)
         valid_backends.append(getattr(self, name))
@@ -356,18 +366,18 @@ class _Backends(object):
 
     @property
     def valid_backends(self):
-        '''
+        """
         Return a tuple of valid backends.
 
         :returns: a list of valid supported backends
         :rtype: tuple
-        '''
+        """
 
         return self._valid_backends
 
 
 def configure(**kwargs):
-    '''
+    """
     Set basic global configuration for :mod:`sherlock`.
 
     :param backend: global choice of backend. This backend will be used
@@ -402,13 +412,12 @@ def configure(**kwargs):
     >>> import redis
     >>> redis_client = redis.StrictRedis(host='X.X.X.X', port=6379, db=1)
     >>> sherlock.configure(client=redis_client)
-    '''
+    """
 
     _configuration.update(**kwargs)
 
 
 class _Configuration(object):
-
     def __init__(self):
         # Choice of backend
         self._backend = None
@@ -436,14 +445,17 @@ class _Configuration(object):
     @backend.setter
     def backend(self, val):
         if val not in backends.valid_backends:
-            backend_names = list(map(
-                lambda x: 'sherlock.backends.%s' % x['name'],
-                backends.valid_backends))
-            error_str = ', '.join(backend_names[:-1])
-            backend_names = '%s and %s' % (error_str,
-                                           backend_names[-1])
-            raise ValueError('Invalid backend. Valid backends are: '
-                             '%s.' % backend_names)
+            backend_names = list(
+                map(
+                    lambda x: "sherlock.backends.%s" % x["name"],
+                    backends.valid_backends,
+                )
+            )
+            error_str = ", ".join(backend_names[:-1])
+            backend_names = "%s and %s" % (error_str, backend_names[-1])
+            raise ValueError(
+                "Invalid backend. Valid backends are: " "%s." % backend_names
+            )
 
         self._backend = val
 
@@ -453,41 +465,48 @@ class _Configuration(object):
             return self._client
         else:
             if self.backend is None:
-                raise ValueError('Cannot create a default client object when '
-                                 'backend is not configured.')
+                raise ValueError(
+                    "Cannot create a default client object when "
+                    "backend is not configured."
+                )
 
             for backend in backends.valid_backends:
                 if self.backend == backend:
-                    self.client = self.backend['client_class'](
-                        *self.backend['default_args'],
-                        **self.backend['default_kwargs'])
+                    self.client = self.backend["client_class"](
+                        *self.backend["default_args"], **self.backend["default_kwargs"]
+                    )
         return self._client
 
     @client.setter
     def client(self, val):
         # When backend is set, check client type
         if self.backend is not None:
-            exc_msg = ('Only a client of the %s library can be used '
-                       'when using %s as the backend store option.')
-            if isinstance(val, self.backend['client_class']):
+            exc_msg = (
+                "Only a client of the %s library can be used "
+                "when using %s as the backend store option."
+            )
+            if isinstance(val, self.backend["client_class"]):
                 self._client = val
             else:
-                raise ValueError(exc_msg % (self.backend['library'],
-                                            self.backend['name']))
+                raise ValueError(
+                    exc_msg % (self.backend["library"], self.backend["name"])
+                )
         else:
             for backend in backends.valid_backends:
-                if isinstance(val, backend['client_class']):
+                if isinstance(val, backend["client_class"]):
                     self._client = val
                     self.backend = backend
             if self._client is None:
-                raise ValueError('The provided object is not a valid client'
-                                 'object. Client objects can only be '
-                                 'instances of redis library\'s client class, '
-                                 'python-etcd library\'s client class or '
-                                 'pylibmc library\'s client class.')
+                raise ValueError(
+                    "The provided object is not a valid client"
+                    "object. Client objects can only be "
+                    "instances of redis library's client class, "
+                    "python-etcd library's client class or "
+                    "pylibmc library's client class."
+                )
 
     def update(self, **kwargs):
-        '''
+        """
         Update configuration. Provide keyword arguments where the keyword
         parameter is the configuration and its value (the argument) is the
         value you intend to set.
@@ -503,12 +522,13 @@ class _Configuration(object):
         :param float timeout: global timeout for acquiring a lock.
         :param float retry_interval: global timeout for retrying to acquire the
                                      lock if previous attempts failed.
-        '''
+        """
 
         for key, val in kwargs.items():
             if key not in dir(self):
-                raise AttributeError('Invalid configuration. No such '
-                                     'configuration as %s.' % key)
+                raise AttributeError(
+                    "Invalid configuration. No such " "configuration as %s." % key
+                )
             setattr(self, key, val)
 
 
