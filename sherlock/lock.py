@@ -6,6 +6,21 @@
 """
 from __future__ import annotations
 
+import datetime
+import importlib
+import json
+import pathlib
+import re
+import time
+import typing
+import uuid
+
+if typing.TYPE_CHECKING:
+    import etcd
+    import filelock
+    import kubernetes
+
+
 __all__ = [
     "LockException",
     "LockTimeoutException",
@@ -16,17 +31,6 @@ __all__ = [
     "KubernetesLock",
     "FileLock",
 ]
-
-import datetime
-import json
-import pathlib
-import re
-import time
-import typing
-import uuid
-
-if typing.TYPE_CHECKING:
-    import kubernetes
 
 
 class LockException(Exception):
@@ -415,7 +419,7 @@ class RedisLock(BaseLock):
         :param client: supported client object for the backend of your choice.
         """
         try:
-            import redis  # noqa: disable=F401
+            import redis
         except ImportError as exc:
             raise ImportError("Please install `sherlock` with `redis` extras.") from exc
 
@@ -529,7 +533,7 @@ class EtcdLock(BaseLock):
         :param client: supported client object for the backend of your choice.
         """
         try:
-            import etcd  # noqa: disable=F401
+            globals()["etcd"] = importlib.import_module("etcd")
         except ImportError as exc:
             raise ImportError("Please install `sherlock` with `etcd` extras.") from exc
 
@@ -548,8 +552,6 @@ class EtcdLock(BaseLock):
             return "/%s" % self.lock_name
 
     def _acquire(self):
-        import etcd  # noqa: disable=F811
-
         owner = str(uuid.uuid4())
 
         _args = [self._key_name, owner]
@@ -565,8 +567,6 @@ class EtcdLock(BaseLock):
             return True
 
     def _release(self):
-        import etcd  # noqa: disable=F811
-
         if self._owner is None:
             raise LockException("Lock was not set by this process.")
 
@@ -585,8 +585,6 @@ class EtcdLock(BaseLock):
 
     @property
     def _locked(self):
-        import etcd  # noqa: disable=F811
-
         try:
             self.client.get(self._key_name)
             return True
@@ -655,7 +653,7 @@ class MCLock(BaseLock):
         :param client: supported client object for the backend of your choice.
         """
         try:
-            import pylibmc  # noqa: disable=F401
+            import pylibmc
         except ImportError as exc:
             raise ImportError(
                 "Please install `sherlock` with `memcached` extras."
@@ -775,7 +773,7 @@ class KubernetesLock(BaseLock):
         :param client: supported client object for the backend of your choice.
         """
         try:
-            import kubernetes  # noqa: disable=F401
+            globals()["kubernetes"] = importlib.import_module("kubernetes")
         except ImportError as exc:
             raise ImportError(
                 "Please install `sherlock` with `kubernetes` extras."
@@ -797,9 +795,6 @@ class KubernetesLock(BaseLock):
                     raise ValueError(err_msg.format(attr))
 
         if self.client is None:
-            import kubernetes.client
-            import kubernetes.config
-
             kubernetes.config.load_config()
             self.client = kubernetes.client.CoordinationV1Api()
 
@@ -833,9 +828,6 @@ class KubernetesLock(BaseLock):
         self,
         owner: str,
     ) -> typing.Optional[kubernetes.client.V1Lease]:
-        import kubernetes.client
-        import kubernetes.client.exceptions
-
         now = self._now()
         try:
             return self.client.create_namespaced_lease(
@@ -859,8 +851,6 @@ class KubernetesLock(BaseLock):
             raise LockException("Failed to create Lock.") from exc
 
     def _get_lease(self) -> typing.Optional[kubernetes.client.V1Lease]:
-        import kubernetes.client.exceptions
-
         try:
             return self.client.read_namespaced_lease(
                 name=self._key_name,
@@ -876,8 +866,6 @@ class KubernetesLock(BaseLock):
         self,
         lease: kubernetes.client.V1Lease,
     ) -> typing.Optional[kubernetes.client.V1Lease]:
-        import kubernetes.client.exceptions
-
         try:
             return self.client.replace_namespaced_lease(
                 name=self._key_name,
@@ -890,9 +878,6 @@ class KubernetesLock(BaseLock):
             raise LockException("Failed to update Lock.") from exc
 
     def _delete_lease(self, lease: kubernetes.client.V1Lease) -> None:
-        import kubernetes.client
-        import kubernetes.client.exceptions
-
         try:
             self.client.delete_namespaced_lease(
                 name=self._key_name,
@@ -1040,7 +1025,7 @@ class FileLock(BaseLock):
         :param client: supported client object for the backend of your choice.
         """
         try:
-            import filelock  # noqa: disable=F401
+            globals()["filelock"] = importlib.import_module("filelock")
         except ImportError as exc:
             raise ImportError(
                 "Please install `sherlock` with `filelock` extras."
@@ -1087,8 +1072,6 @@ class FileLock(BaseLock):
         owner = str(uuid.uuid4())
 
         # Make sure we have unique lock on the file.
-        import filelock  # noqa: disable=F811
-
         with filelock.FileLock(str(self._lock_file.absolute())):
             if self._data_file.exists():
                 with self._data_file.open("r") as f:
@@ -1124,8 +1107,6 @@ class FileLock(BaseLock):
         if self._owner is None:
             raise LockException("Lock was not set by this process.")
 
-        import filelock  # noqa: disable=F811
-
         with filelock.FileLock(str(self._lock_file.absolute())):
             if self._data_file.exists():
                 with self._data_file.open("r") as f:
@@ -1136,8 +1117,6 @@ class FileLock(BaseLock):
 
     @property
     def _locked(self):
-        import filelock  # noqa: disable=F811
-
         with filelock.FileLock(str(self._lock_file.absolute())):
             if self._data_file.exists():
                 with self._data_file.open("r") as f:
