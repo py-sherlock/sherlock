@@ -52,3 +52,6 @@ docs/_build/
 # Custom
 dump.rdb
 docs/source/_build
+
+# Project specific
+kubeconfig.yaml
