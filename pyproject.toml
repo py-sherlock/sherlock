@@ -33,11 +33,11 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.7"
 
-filelock = "^3.7.1"
-kubernetes = "^24.2.0"
-redis = "^4.3.4"
-python-etcd = "^0.4.5"
-pylibmc = "^1.6.1"
+filelock = { version = "^3.7.1", optional = true }
+kubernetes = { version = "^24.2.0", optional = true }
+redis = { version = "^4.3.4", optional = true }
+python-etcd = { version = "^0.4.5", optional = true }
+pylibmc = { version = "^1.6.1", optional = true }
 
 [tool.poetry.dev-dependencies]
 tox = "^3.25.1"
@@ -46,6 +46,20 @@ tox-gh-actions = "^2.9.1"
 tox-poetry = "^0.4.1"
 pytest = "^7.1.2"
 pytest-cov = "^3.0.0"
+
+[tool.poetry.extras]
+all = [
+    "filelock",
+    "kubernetes",
+    "redis",
+    "etcd",
+    "pylibmc",
+]
+filelock = ["filelock"]
+kubernetes = ["kubernetes"]
+redis = ["redis"]
+etcd = ["python-etcd"]
+memcached = ["pylibmc"]
 
 [build-system]
 requires = ["poetry_core>=1.0.0"]
