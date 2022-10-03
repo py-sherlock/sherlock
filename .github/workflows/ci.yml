@@ -7,19 +7,68 @@ on:
   pull_request: {}
 
 jobs:
-  test:
-    name: Test
+
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    env:
-      PYTHON_VERSION: 3.7
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup test infrastructure
-        run: make up
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+
+      - name: Instal Sherlock
+        run: pip install -e .
+
+      - uses: psf/black@stable
+        with:
+          src: ./sherlock ./tests
+
+      - uses: jamescurtin/isort-action@master
+        with:
+          sortPaths: ./sherlock ./tests
+
+  test:
+    name: Test ${{ matrix.py }} - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - Ubuntu
+        py:
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
+
+    env:
+      REDIS_HOST: 127.0.0.1
+      ETCD_HOST: 127.0.0.1
+      MEMCACHED_HOST: 127.0.0.1
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Setup Python ${{ matrix.py }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.py }}
+          cache: 'poetry'
+
+      - name: Install `libmemcached-dev`
+        run: sudo apt-get install -y libmemcached-dev
+
+      - name: Install sherlock
+        run: poetry install
 
       - name: Run tests
-        run: make test
+        run: poetry run tox
 
       - uses: codecov/codecov-action@v3
