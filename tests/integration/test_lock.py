@@ -1,49 +1,52 @@
-'''
+"""
     Integration tests for backend locks.
-'''
+"""
 
 import datetime
 import json
+import os
 import pathlib
+import time
+import unittest
 from unittest.mock import patch
+
 import etcd
 import kubernetes.client
 import kubernetes.client.exceptions
 import kubernetes.config
-import os
 import pylibmc
 import redis
+
 import sherlock
-import time
-import unittest
 
 
 class TestRedisLock(unittest.TestCase):
-
     def setUp(self):
         try:
             self.client = redis.StrictRedis(
-                host=os.getenv('REDIS_HOST', 'redis'),
+                host=os.getenv("REDIS_HOST", "redis"),
             )
         except Exception as err:
             print(str(err))
-            raise Exception('You must have Redis server running on localhost '
-                            'to be able to run integration tests.')
-        self.lock_name = 'test_lock'
+            raise Exception(
+                "You must have Redis server running on localhost "
+                "to be able to run integration tests."
+            )
+        self.lock_name = "test_lock"
 
     def test_acquire(self):
         lock = sherlock.RedisLock(self.lock_name, client=self.client)
         self.assertTrue(lock._acquire())
-        self.assertEqual(self.client.get(self.lock_name).decode('UTF-8'),
-                         str(lock._owner))
+        self.assertEqual(
+            self.client.get(self.lock_name).decode("UTF-8"), str(lock._owner)
+        )
 
     def test_acquire_with_namespace(self):
-        lock = sherlock.RedisLock(self.lock_name, client=self.client,
-                                  namespace='ns')
+        lock = sherlock.RedisLock(self.lock_name, client=self.client, namespace="ns")
         self.assertTrue(lock._acquire())
         self.assertEqual(
-            self.client.get('ns_%s' % self.lock_name).decode('UTF-8'),
-            str(lock._owner))
+            self.client.get("ns_%s" % self.lock_name).decode("UTF-8"), str(lock._owner)
+        )
 
     def test_acquire_once_only(self):
         lock1 = sherlock.RedisLock(self.lock_name, client=self.client)
@@ -58,8 +61,7 @@ class TestRedisLock(unittest.TestCase):
         self.assertFalse(lock.locked())
 
     def test_acquire_check_expire_is_not_set(self):
-        lock = sherlock.RedisLock(self.lock_name, client=self.client,
-                                  expire=None)
+        lock = sherlock.RedisLock(self.lock_name, client=self.client, expire=None)
         lock.acquire()
         time.sleep(2)
         self.assertTrue(self.client.ttl(self.lock_name) < 0)
@@ -71,11 +73,10 @@ class TestRedisLock(unittest.TestCase):
         self.assertEqual(self.client.get(self.lock_name), None)
 
     def test_release_with_namespace(self):
-        lock = sherlock.RedisLock(self.lock_name, client=self.client,
-                                  namespace='ns')
+        lock = sherlock.RedisLock(self.lock_name, client=self.client, namespace="ns")
         lock._acquire()
         lock._release()
-        self.assertEqual(self.client.get('ns_%s' % self.lock_name), None)
+        self.assertEqual(self.client.get("ns_%s" % self.lock_name), None)
 
     def test_release_own_only(self):
         lock1 = sherlock.RedisLock(self.lock_name, client=self.client)
@@ -94,35 +95,34 @@ class TestRedisLock(unittest.TestCase):
     def test_deleting_lock_object_releases_the_lock(self):
         lock = sherlock.lock.RedisLock(self.lock_name, client=self.client)
         lock.acquire()
-        self.assertEqual(self.client.get(self.lock_name).decode('UTF-8'),
-                         str(lock._owner))
+        self.assertEqual(
+            self.client.get(self.lock_name).decode("UTF-8"), str(lock._owner)
+        )
 
         del lock
         self.assertEqual(self.client.get(self.lock_name), None)
 
     def tearDown(self):
         self.client.delete(self.lock_name)
-        self.client.delete('ns_%s' % self.lock_name)
+        self.client.delete("ns_%s" % self.lock_name)
 
 
 class TestEtcdLock(unittest.TestCase):
-
     def setUp(self):
-        self.client = etcd.Client(host=os.getenv('ETCD_HOST', 'etcd'))
-        self.lock_name = 'test_lock'
+        self.client = etcd.Client(host=os.getenv("ETCD_HOST", "etcd"))
+        self.lock_name = "test_lock"
 
     def test_acquire(self):
         lock = sherlock.EtcdLock(self.lock_name, client=self.client)
         self.assertTrue(lock._acquire())
-        self.assertEqual(self.client.get(self.lock_name).value,
-                         str(lock._owner))
+        self.assertEqual(self.client.get(self.lock_name).value, str(lock._owner))
 
     def test_acquire_with_namespace(self):
-        lock = sherlock.EtcdLock(self.lock_name, client=self.client,
-                                 namespace='ns')
+        lock = sherlock.EtcdLock(self.lock_name, client=self.client, namespace="ns")
         self.assertTrue(lock._acquire())
-        self.assertEqual(self.client.get('/ns/%s' % self.lock_name).value,
-                         str(lock._owner))
+        self.assertEqual(
+            self.client.get("/ns/%s" % self.lock_name).value, str(lock._owner)
+        )
 
     def test_acquire_once_only(self):
         lock1 = sherlock.EtcdLock(self.lock_name, client=self.client)
@@ -137,8 +137,7 @@ class TestEtcdLock(unittest.TestCase):
         self.assertFalse(lock.locked())
 
     def test_acquire_check_expire_is_not_set(self):
-        lock = sherlock.EtcdLock(self.lock_name, client=self.client,
-                                 expire=None)
+        lock = sherlock.EtcdLock(self.lock_name, client=self.client, expire=None)
         lock.acquire()
         time.sleep(2)
         self.assertEquals(self.client.get(self.lock_name).ttl, None)
@@ -150,11 +149,12 @@ class TestEtcdLock(unittest.TestCase):
         self.assertRaises(etcd.EtcdKeyNotFound, self.client.get, self.lock_name)
 
     def test_release_with_namespace(self):
-        lock = sherlock.EtcdLock(self.lock_name, client=self.client,
-                                 namespace='ns')
+        lock = sherlock.EtcdLock(self.lock_name, client=self.client, namespace="ns")
         lock._acquire()
         lock._release()
-        self.assertRaises(etcd.EtcdKeyNotFound, self.client.get, '/ns/%s' % self.lock_name)
+        self.assertRaises(
+            etcd.EtcdKeyNotFound, self.client.get, "/ns/%s" % self.lock_name
+        )
 
     def test_release_own_only(self):
         lock1 = sherlock.EtcdLock(self.lock_name, client=self.client)
@@ -184,18 +184,18 @@ class TestEtcdLock(unittest.TestCase):
         except etcd.EtcdKeyNotFound:
             pass
         try:
-            self.client.delete('/ns/%s' % self.lock_name)
+            self.client.delete("/ns/%s" % self.lock_name)
         except etcd.EtcdKeyNotFound:
             pass
 
-class TestMCLock(unittest.TestCase):
 
+class TestMCLock(unittest.TestCase):
     def setUp(self):
         self.client = pylibmc.Client(
-            [os.getenv('MEMCACHED_HOST', 'memcached')],
+            [os.getenv("MEMCACHED_HOST", "memcached")],
             binary=True,
         )
-        self.lock_name = 'test_lock'
+        self.lock_name = "test_lock"
 
     def test_acquire(self):
         lock = sherlock.MCLock(self.lock_name, client=self.client)
@@ -203,11 +203,9 @@ class TestMCLock(unittest.TestCase):
         self.assertEqual(self.client.get(self.lock_name), str(lock._owner))
 
     def test_acquire_with_namespace(self):
-        lock = sherlock.MCLock(self.lock_name, client=self.client,
-                               namespace='ns')
+        lock = sherlock.MCLock(self.lock_name, client=self.client, namespace="ns")
         self.assertTrue(lock._acquire())
-        self.assertEqual(self.client.get('ns_%s' % self.lock_name),
-                         str(lock._owner))
+        self.assertEqual(self.client.get("ns_%s" % self.lock_name), str(lock._owner))
 
     def test_acquire_once_only(self):
         lock1 = sherlock.MCLock(self.lock_name, client=self.client)
@@ -228,11 +226,10 @@ class TestMCLock(unittest.TestCase):
         self.assertEqual(self.client.get(self.lock_name), None)
 
     def test_release_with_namespace(self):
-        lock = sherlock.MCLock(self.lock_name, client=self.client,
-                               namespace='ns')
+        lock = sherlock.MCLock(self.lock_name, client=self.client, namespace="ns")
         lock._acquire()
         lock._release()
-        self.assertEqual(self.client.get('ns_%s' % self.lock_name), None)
+        self.assertEqual(self.client.get("ns_%s" % self.lock_name), None)
 
     def test_release_own_only(self):
         lock1 = sherlock.MCLock(self.lock_name, client=self.client)
@@ -258,18 +255,18 @@ class TestMCLock(unittest.TestCase):
 
     def tearDown(self):
         self.client.delete(self.lock_name)
-        self.client.delete('ns_%s' % self.lock_name)
+        self.client.delete("ns_%s" % self.lock_name)
 
 
 class TestKubernetesLock(unittest.TestCase):
     def setUp(self):
         kubernetes.config.load_kube_config(
-            config_file=os.environ['KUBECONFIG'],
+            config_file=os.environ["KUBECONFIG"],
         )
         kubernetes.config.load_config
         self.client = kubernetes.client.CoordinationV1Api()
-        self.lock_name = 'test-lock'
-        self.k8s_namespace = 'default'
+        self.lock_name = "test-lock"
+        self.k8s_namespace = "default"
 
     def test_acquire(self):
         lock = sherlock.KubernetesLock(self.lock_name, self.k8s_namespace)
@@ -284,11 +281,11 @@ class TestKubernetesLock(unittest.TestCase):
         lock = sherlock.KubernetesLock(
             self.lock_name,
             self.k8s_namespace,
-            namespace='ns',
+            namespace="ns",
         )
         self.assertTrue(lock._acquire())
         lease = self.client.read_namespaced_lease(
-            name=f'ns-{self.lock_name}',
+            name=f"ns-{self.lock_name}",
             namespace=self.k8s_namespace,
         )
         self.assertEqual(lease.spec.holder_identity, str(lock._owner))
@@ -339,9 +336,9 @@ class TestKubernetesLock(unittest.TestCase):
             lease_2.spec.holder_identity,
         )
 
-    @patch('sherlock.lock.uuid.uuid4')
+    @patch("sherlock.lock.uuid.uuid4")
     def test_acquire_owner_collison(self, mock_uuid4):
-        mock_uuid4.return_value = b'fake-uuid'
+        mock_uuid4.return_value = b"fake-uuid"
 
         lock = sherlock.KubernetesLock(
             self.lock_name,
@@ -375,13 +372,13 @@ class TestKubernetesLock(unittest.TestCase):
                 name=self.lock_name,
                 namespace=self.k8s_namespace,
             )
-        self.assertEqual(cm.exception.reason, 'Not Found')
+        self.assertEqual(cm.exception.reason, "Not Found")
 
     def test_release_with_namespace(self):
         lock = sherlock.KubernetesLock(
             self.lock_name,
             self.k8s_namespace,
-            namespace='ns',
+            namespace="ns",
         )
         lock._acquire()
         lock._release()
@@ -419,7 +416,7 @@ class TestKubernetesLock(unittest.TestCase):
                 name=self.lock_name,
                 namespace=self.k8s_namespace,
             )
-        self.assertEqual(cm.exception.reason, 'Not Found')
+        self.assertEqual(cm.exception.reason, "Not Found")
 
     def test_release_lock_that_no_longer_exists(self):
         lock_1 = sherlock.KubernetesLock(
@@ -447,26 +444,26 @@ class TestKubernetesLock(unittest.TestCase):
                 namespace=self.k8s_namespace,
             )
         except kubernetes.client.exceptions.ApiException as exc:
-            if exc.reason != 'Not Found':
+            if exc.reason != "Not Found":
                 raise exc
         try:
             self.client.delete_namespaced_lease(
-                name=f'ns-{self.lock_name}',
+                name=f"ns-{self.lock_name}",
                 namespace=self.k8s_namespace,
             )
         except kubernetes.client.exceptions.ApiException as exc:
-            if exc.reason != 'Not Found':
+            if exc.reason != "Not Found":
                 raise exc
 
 
 class TestFileLock(unittest.TestCase):
     def setUp(self):
-        self.client = pathlib.Path('/tmp/sherlock')
-        self.lock_name = 'test-lock'
-        self.k8s_namespace = 'default'
+        self.client = pathlib.Path("/tmp/sherlock")
+        self.lock_name = "test-lock"
+        self.k8s_namespace = "default"
 
     def _load_file(self, key_name):
-        with (self.client / key_name).with_suffix('.json').open('r') as f:
+        with (self.client / key_name).with_suffix(".json").open("r") as f:
             return json.load(f)
 
     def test_acquire(self):
@@ -475,18 +472,18 @@ class TestFileLock(unittest.TestCase):
 
         key = self.lock_name
         file = self._load_file(key)
-        self.assertEqual(file['owner'], str(lock._owner))
+        self.assertEqual(file["owner"], str(lock._owner))
 
     def test_acquire_with_namespace(self):
         lock = sherlock.FileLock(
             self.lock_name,
             client=self.client,
-            namespace='ns',
+            namespace="ns",
         )
         self.assertTrue(lock._acquire())
-        key = f'ns_{self.lock_name}'
+        key = f"ns_{self.lock_name}"
         file = self._load_file(key)
-        self.assertEqual(file['owner'], str(lock._owner))
+        self.assertEqual(file["owner"], str(lock._owner))
 
     def test_acquire_once_only(self):
         lock1 = sherlock.FileLock(
@@ -537,12 +534,12 @@ class TestFileLock(unittest.TestCase):
 
         # New file has new owner and new owner is not the same
         # as old owner.
-        self.assertEqual(file_2['owner'], str(lock._owner))
-        self.assertNotEqual(file_1['owner'], file_2['owner'])
+        self.assertEqual(file_2["owner"], str(lock._owner))
+        self.assertNotEqual(file_1["owner"], file_2["owner"])
 
-    @patch('sherlock.lock.uuid.uuid4')
+    @patch("sherlock.lock.uuid.uuid4")
     def test_acquire_owner_collison(self, mock_uuid4):
-        mock_uuid4.return_value = b'fake-uuid'
+        mock_uuid4.return_value = b"fake-uuid"
 
         lock = sherlock.FileLock(
             self.lock_name,
@@ -562,7 +559,7 @@ class TestFileLock(unittest.TestCase):
         time.sleep(2)
         file = self._load_file(self.lock_name)
         self.assertEqual(
-            file['expiry_time'],
+            file["expiry_time"],
             datetime.datetime.max.astimezone(datetime.timezone.utc).isoformat(),
         )
         self.assertTrue(lock.locked())
@@ -577,7 +574,7 @@ class TestFileLock(unittest.TestCase):
         lock = sherlock.FileLock(
             self.lock_name,
             client=self.client,
-            namespace='ns',
+            namespace="ns",
         )
         lock._acquire()
         lock._release()
@@ -602,7 +599,7 @@ class TestFileLock(unittest.TestCase):
 
         lock.acquire()
         file = self._load_file(self.lock_name)
-        self.assertEqual(file['owner'], str(lock._owner))
+        self.assertEqual(file["owner"], str(lock._owner))
 
         data_file = lock._data_file
         del lock

@@ -1,13 +1,13 @@
-'''
+"""
     Tests for some basic package's root level functionality.
-'''
+"""
 
-import etcd
-import sherlock
 import unittest
 from unittest.mock import Mock
 
+import etcd
 
+import sherlock
 from sherlock import _Configuration
 
 # import reload in Python 3
@@ -21,20 +21,18 @@ except NameError:
 
 
 class TestConfiguration(unittest.TestCase):
-
     def setUp(self):
         reload(sherlock)
         self.configure = _Configuration()
 
     def test_update_settings_raises_error_when_updating_invalid_config(self):
         # Raises error when trying to update invalid setting
-        self.assertRaises(AttributeError, self.configure.update,
-                          invalid_arg='val')
+        self.assertRaises(AttributeError, self.configure.update, invalid_arg="val")
 
     def test_updates_valid_settings(self):
         # Updates valid setting
-        self.configure.update(namespace='something')
-        self.assertEqual(self.configure.namespace, 'something')
+        self.configure.update(namespace="something")
+        self.assertEqual(self.configure.namespace, "something")
 
     def test_backend_gets_backend_when_backend_is_not_set(self):
         # When backend is not set
@@ -46,19 +44,18 @@ class TestConfiguration(unittest.TestCase):
         # When backend is set
         self.configure.backend = sherlock.backends.ETCD
         self.assertEqual(self.configure._backend, self.configure.backend)
-        self.assertEqual(self.configure._backend,
-                         sherlock.backends.ETCD)
+        self.assertEqual(self.configure._backend, sherlock.backends.ETCD)
 
     def test_backend_raises_error_on_setting_invalid_backend(self):
         def _test():
             # Set some unexpected value
             self.configure.backend = 0
+
         self.assertRaises(ValueError, _test)
 
     def test_backend_sets_backend_value(self):
         self.configure.backend = sherlock.backends.ETCD
-        self.assertEqual(self.configure._backend,
-                         sherlock.backends.ETCD)
+        self.assertEqual(self.configure._backend, sherlock.backends.ETCD)
 
     def test_client_returns_the_set_client_object(self):
         client = Mock()
@@ -72,6 +69,7 @@ class TestConfiguration(unittest.TestCase):
 
         def _test():
             self.configure.client
+
         self.assertRaises(ValueError, _test)
 
     def test_client_returns_client_when_not_set_but_backend_is_set(self):
@@ -84,6 +82,7 @@ class TestConfiguration(unittest.TestCase):
 
         def _test():
             self.configure.client = None
+
         self.assertRaises(ValueError, _test)
 
         # When backend is set and client object is valid
@@ -104,10 +103,11 @@ class TestConfiguration(unittest.TestCase):
         self.configure._backend = None
         self.configure._client = None
         self.assertEqual(self.configure.backend, None)
-        client_obj = 'Random'
+        client_obj = "Random"
 
         def _test():
             self.configure.client = client_obj
+
         self.assertRaises(ValueError, _test)
 
         # When backend is not set and client library is available and client is
@@ -120,55 +120,53 @@ class TestConfiguration(unittest.TestCase):
 
 
 def testConfigure():
-    '''
+    """
     Test the library configure function.
-    '''
+    """
 
-    sherlock.configure(namespace='namespace')
-    assert sherlock._configuration.namespace == 'namespace'
+    sherlock.configure(namespace="namespace")
+    assert sherlock._configuration.namespace == "namespace"
 
 
 class TestBackends(unittest.TestCase):
-
     def setUp(self):
         reload(sherlock)
 
     def test_valid_backends(self):
-        self.assertEqual(sherlock.backends.valid_backends,
-                         sherlock.backends._valid_backends)
+        self.assertEqual(
+            sherlock.backends.valid_backends, sherlock.backends._valid_backends
+        )
 
     def test_register_raises_exception_when_lock_class_invalid(self):
-        self.assertRaises(ValueError,
-                          sherlock.backends.register,
-                          'MyLock',
-                          object,
-                          'some_lib',
-                          object)
+        self.assertRaises(
+            ValueError, sherlock.backends.register, "MyLock", object, "some_lib", object
+        )
 
     def test_register_registers_custom_backend(self):
         class MyLock(sherlock.lock.BaseLock):
             pass
-        name = 'MyLock'
+
+        name = "MyLock"
         lock_class = MyLock
-        library = 'some_lib'
+        library = "some_lib"
         client_class = object
         args = (1, 2, 3)
-        kwargs = dict(somekey='someval')
-        sherlock.backends.register(name=name,
-                                   lock_class=lock_class,
-                                   library=library,
-                                   client_class=client_class,
-                                   default_args=args,
-                                   default_kwargs=kwargs)
+        kwargs = dict(somekey="someval")
+        sherlock.backends.register(
+            name=name,
+            lock_class=lock_class,
+            library=library,
+            client_class=client_class,
+            default_args=args,
+            default_kwargs=kwargs,
+        )
 
         self.assertTrue(isinstance(sherlock.backends.MyLock, dict))
-        self.assertEqual(sherlock.backends.MyLock['name'], name)
-        self.assertEqual(sherlock.backends.MyLock['lock_class'], lock_class)
-        self.assertEqual(sherlock.backends.MyLock['library'], library)
-        self.assertEqual(sherlock.backends.MyLock['client_class'],
-                         client_class)
-        self.assertEqual(sherlock.backends.MyLock['default_args'], args)
-        self.assertEqual(sherlock.backends.MyLock['default_kwargs'], kwargs)
+        self.assertEqual(sherlock.backends.MyLock["name"], name)
+        self.assertEqual(sherlock.backends.MyLock["lock_class"], lock_class)
+        self.assertEqual(sherlock.backends.MyLock["library"], library)
+        self.assertEqual(sherlock.backends.MyLock["client_class"], client_class)
+        self.assertEqual(sherlock.backends.MyLock["default_args"], args)
+        self.assertEqual(sherlock.backends.MyLock["default_kwargs"], kwargs)
 
-        self.assertTrue(
-            sherlock.backends.MyLock in sherlock.backends.valid_backends)
+        self.assertTrue(sherlock.backends.MyLock in sherlock.backends.valid_backends)

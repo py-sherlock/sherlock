@@ -7,6 +7,29 @@ on:
   pull_request: {}
 
 jobs:
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+
+      - name: Instal Sherlock
+        run: pip install -e .
+
+      - uses: psf/black@stable
+        with:
+          src: ./sherlock ./tests
+
+      - uses: jamescurtin/isort-action@master
+        with:
+          sortPaths: ./sherlock ./tests
+
   test:
     name: Test ${{ matrix.py }} - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}-latest

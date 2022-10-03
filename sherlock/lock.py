@@ -1,58 +1,58 @@
-'''
+"""
     lock
     ~~~~
 
     A generic lock.
-'''
+"""
 
 __all__ = [
-    'LockException',
-    'LockTimeoutException',
-    'Lock',
-    'RedisLock',
-    'EtcdLock',
-    'MCLock',
-    'KubernetesLock',
-    'FileLock',
+    "LockException",
+    "LockTimeoutException",
+    "Lock",
+    "RedisLock",
+    "EtcdLock",
+    "MCLock",
+    "KubernetesLock",
+    "FileLock",
 ]
 
 import datetime
-import etcd
-import filelock
 import json
-import kubernetes.client
-import kubernetes.client.exceptions
-import kubernetes.config
 import pathlib
-import pylibmc
 import re
-import redis
 import time
 import typing
 import uuid
 
-from . import backends
-from . import _configuration
+import etcd
+import filelock
+import kubernetes.client
+import kubernetes.client.exceptions
+import kubernetes.config
+import pylibmc
+import redis
+
+from . import _configuration, backends
 
 
 class LockException(Exception):
-    '''
+    """
     Generic exception for Locks.
-    '''
+    """
 
     pass
 
 
 class LockTimeoutException(Exception):
-    '''
+    """
     Raised whenever timeout occurs while trying to acquire lock.
-    '''
+    """
 
     pass
 
 
 class BaseLock(object):
-    '''
+    """
     Interface for implementing custom Lock implementations. This class must be
     sub-classed in order to implement a custom Lock with custom logic or
     different backend or both.
@@ -86,12 +86,10 @@ class BaseLock(object):
     ...         if self.client.get(self.lock_name) is not None:
     ...             return True
     ...         return False
-    '''
+    """
 
-    def __init__(self,
-                 lock_name,
-                 **kwargs):
-        '''
+    def __init__(self, lock_name, **kwargs):
+        """
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
         :param str namespace: Optional namespace to namespace lock keys for
@@ -102,79 +100,79 @@ class BaseLock(object):
         :param float retry_interval: set interval for trying acquiring lock
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
-        '''
+        """
 
         self.lock_name = lock_name
 
-        if kwargs.get('namespace'):
-            self.namespace = kwargs['namespace']
+        if kwargs.get("namespace"):
+            self.namespace = kwargs["namespace"]
         else:
             self.namespace = _configuration.namespace
 
-        if 'expire' not in kwargs:
+        if "expire" not in kwargs:
             self.expire = _configuration.expire
         else:
-            self.expire = kwargs['expire']
+            self.expire = kwargs["expire"]
 
-        if kwargs.get('timeout'):
-            self.timeout = kwargs['timeout']
+        if kwargs.get("timeout"):
+            self.timeout = kwargs["timeout"]
         else:
             self.timeout = _configuration.timeout
 
-        if kwargs.get('retry_interval'):
-            self.retry_interval = kwargs['retry_interval']
+        if kwargs.get("retry_interval"):
+            self.retry_interval = kwargs["retry_interval"]
         else:
             self.retry_interval = _configuration.retry_interval
 
-        if kwargs.get('client'):
-            self.client = kwargs['client']
+        if kwargs.get("client"):
+            self.client = kwargs["client"]
         else:
             self.client = None
 
     @property
     def _locked(self):
-        '''
+        """
         Implementation of method to check if lock has been acquired. Must be
         implemented in the sub-class.
 
         :returns: if the lock is acquired or not
         :rtype: bool
-        '''
+        """
 
-        raise NotImplementedError('Must be implemented in the sub-class.')
+        raise NotImplementedError("Must be implemented in the sub-class.")
 
     def locked(self):
-        '''
+        """
         Return if the lock has been acquired or not.
 
         :returns: True indicating that a lock has been acquired ot a
                   shared resource is locked.
         :rtype: bool
-        '''
+        """
 
         return self._locked
 
     def _acquire(self):
-        '''
+        """
         Implementation of acquiring a lock in a non-blocking fashion. Must be
         implemented in the sub-class. :meth:`acquire` makes use of this
         implementation to provide blocking and non-blocking implementations.
 
         :returns: if the lock was successfully acquired or not
         :rtype: bool
-        '''
+        """
 
-        raise NotImplementedError('Must be implemented in the sub-class.')
+        raise NotImplementedError("Must be implemented in the sub-class.")
 
     def acquire(self, blocking=True):
-        '''
+        """
         Acquire a lock, blocking or non-blocking.
 
         :param bool blocking: acquire a lock in a blocking or non-blocking
                               fashion. Defaults to True.
         :returns: if the lock was successfully acquired or not
         :rtype: bool
-        '''
+        """
 
         if blocking is True:
             timeout = self.timeout
@@ -185,24 +183,26 @@ class BaseLock(object):
                         time.sleep(self.retry_interval)
                 else:
                     return True
-            raise LockTimeoutException('Timeout elapsed after %s seconds '
-                                       'while trying to acquiring '
-                                       'lock.' % self.timeout)
+            raise LockTimeoutException(
+                "Timeout elapsed after %s seconds "
+                "while trying to acquiring "
+                "lock." % self.timeout
+            )
         else:
             return self._acquire()
 
     def _release(self):
-        '''
+        """
         Implementation of releasing an acquired lock. Must be implemented in
         the sub-class.
-        '''
+        """
 
-        raise NotImplementedError('Must be implemented in the sub-class.')
+        raise NotImplementedError("Must be implemented in the sub-class.")
 
     def release(self):
-        '''
+        """
         Release a lock.
-        '''
+        """
 
         return self._release()
 
@@ -220,7 +220,7 @@ class BaseLock(object):
 
 
 class Lock(BaseLock):
-    '''
+    """
     A general lock that inherits global coniguration and provides locks with
     the configured backend.
 
@@ -268,10 +268,10 @@ class Lock(BaseLock):
     >>> with Lock('my_lock') as lock:
     ...     # do some stuff with your acquired resource
     ...     pass
-    '''
+    """
 
     def __init__(self, lock_name, **kwargs):
-        '''
+        """
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
         :param str namespace: Optional namespace to namespace lock keys for
@@ -285,12 +285,11 @@ class Lock(BaseLock):
         .. Note:: this Lock object does not accept a custom lock backend store
                   client object. It instead uses the global custom client
                   object.
-        '''
+        """
 
         # Raise exception if client keyword argument is found
-        if 'client' in kwargs:
-            raise TypeError('Lock object does not accept a custom client '
-                            'object')
+        if "client" in kwargs:
+            raise TypeError("Lock object does not accept a custom client " "object")
         super(Lock, self).__init__(lock_name, **kwargs)
 
         try:
@@ -303,37 +302,45 @@ class Lock(BaseLock):
         else:
             kwargs.update(client=_configuration.client)
             try:
-                self._lock_proxy = globals()[_configuration.backend['lock_class']](
-                    lock_name, **kwargs)
+                self._lock_proxy = globals()[_configuration.backend["lock_class"]](
+                    lock_name, **kwargs
+                )
             except KeyError:
-                self._lock_proxy = _configuration.backend['lock_class'](
-                    lock_name, **kwargs)
+                self._lock_proxy = _configuration.backend["lock_class"](
+                    lock_name, **kwargs
+                )
 
     def _acquire(self):
         if self._lock_proxy is None:
-            raise LockException('Lock backend has not been configured and '
-                                'lock cannot be acquired or released. '
-                                'Configure lock backend first.')
+            raise LockException(
+                "Lock backend has not been configured and "
+                "lock cannot be acquired or released. "
+                "Configure lock backend first."
+            )
         return self._lock_proxy.acquire(False)
 
     def _release(self):
         if self._lock_proxy is None:
-            raise LockException('Lock backend has not been configured and '
-                                'lock cannot be acquired or released. '
-                                'Configure lock backend first.')
+            raise LockException(
+                "Lock backend has not been configured and "
+                "lock cannot be acquired or released. "
+                "Configure lock backend first."
+            )
         return self._lock_proxy.release()
 
     @property
     def _locked(self):
         if self._lock_proxy is None:
-            raise LockException('Lock backend has not been configured and '
-                                'lock cannot be acquired or released. '
-                                'Configure lock backend first.')
+            raise LockException(
+                "Lock backend has not been configured and "
+                "lock cannot be acquired or released. "
+                "Configure lock backend first."
+            )
         return self._lock_proxy.locked()
 
 
 class RedisLock(BaseLock):
-    '''
+    """
     Implementation of lock with Redis as the backend for synchronization.
 
     Basic Usage:
@@ -377,27 +384,27 @@ class RedisLock(BaseLock):
     >>> with RedisLock('my_lock') as lock:
     ...     # do some stuff with your acquired resource
     ...     pass
-    '''
+    """
 
-    _acquire_script = '''
+    _acquire_script = """
     local result = redis.call('SETNX', KEYS[1], KEYS[2])
     if result == 1 then
         redis.call('EXPIRE', KEYS[1], KEYS[3])
     end
     return result
-    '''
+    """
 
-    _release_script = '''
+    _release_script = """
     local result = 0
     if redis.call('GET', KEYS[1]) == KEYS[2] then
         redis.call('DEL', KEYS[1])
         result = 1
     end
     return result
-    '''
+    """
 
     def __init__(self, lock_name, **kwargs):
-        '''
+        """
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
         :param str namespace: Optional namespace to namespace lock keys for
@@ -408,12 +415,12 @@ class RedisLock(BaseLock):
         :param float retry_interval: set interval for trying acquiring lock
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
-        '''
+        """
 
         super(RedisLock, self).__init__(lock_name, **kwargs)
 
         if self.client is None:
-            self.client = redis.StrictRedis(host='localhost', port=6379, db=0)
+            self.client = redis.StrictRedis(host="localhost", port=6379, db=0)
 
         self._owner = None
 
@@ -424,7 +431,7 @@ class RedisLock(BaseLock):
     @property
     def _key_name(self):
         if self.namespace is not None:
-            key = '%s_%s' % (self.namespace, self.lock_name)
+            key = "%s_%s" % (self.namespace, self.lock_name)
         else:
             key = self.lock_name
         return key
@@ -435,20 +442,20 @@ class RedisLock(BaseLock):
             expire = -1
         else:
             expire = self.expire
-        if self._acquire_func(keys=[self._key_name,
-                                    owner,
-                                    expire]) != 1:
+        if self._acquire_func(keys=[self._key_name, owner, expire]) != 1:
             return False
         self._owner = owner
         return True
 
     def _release(self):
         if self._owner is None:
-            raise LockException('Lock was not set by this process.')
+            raise LockException("Lock was not set by this process.")
 
         if self._release_func(keys=[self._key_name, self._owner]) != 1:
-            raise LockException('Lock could not be released because it was '
-                                'not acquired by this instance.')
+            raise LockException(
+                "Lock could not be released because it was "
+                "not acquired by this instance."
+            )
 
         self._owner = None
 
@@ -460,7 +467,7 @@ class RedisLock(BaseLock):
 
 
 class EtcdLock(BaseLock):
-    '''
+    """
     Implementation of lock with Etcd as the backend for synchronization.
 
     Basic Usage:
@@ -504,10 +511,10 @@ class EtcdLock(BaseLock):
     >>> with EtcdLock('my_lock') as lock:
     ...     # do some stuff with your acquired resource
     ...     pass
-    '''
+    """
 
     def __init__(self, lock_name, **kwargs):
-        '''
+        """
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
         :param str namespace: Optional namespace to namespace lock keys for
@@ -518,7 +525,7 @@ class EtcdLock(BaseLock):
         :param float retry_interval: set interval for trying acquiring lock
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
-        '''
+        """
 
         super(EtcdLock, self).__init__(lock_name, **kwargs)
 
@@ -530,9 +537,9 @@ class EtcdLock(BaseLock):
     @property
     def _key_name(self):
         if self.namespace is not None:
-            return '/%s/%s' % (self.namespace, self.lock_name)
+            return "/%s/%s" % (self.namespace, self.lock_name)
         else:
-            return '/%s' % self.lock_name
+            return "/%s" % self.lock_name
 
     def _acquire(self):
         owner = str(uuid.uuid4())
@@ -542,8 +549,7 @@ class EtcdLock(BaseLock):
             _args.append(self.expire)
 
         try:
-            self.client.write(self._key_name, owner,
-                              prevExist=False, ttl=self.expire)
+            self.client.write(self._key_name, owner, prevExist=False, ttl=self.expire)
             self._owner = owner
         except etcd.EtcdAlreadyExist:
             return False
@@ -552,18 +558,20 @@ class EtcdLock(BaseLock):
 
     def _release(self):
         if self._owner is None:
-            raise LockException('Lock was not set by this process.')
+            raise LockException("Lock was not set by this process.")
 
         try:
-            resp = self.client.delete(self._key_name,
-                                      prevValue=str(self._owner))
+            resp = self.client.delete(self._key_name, prevValue=str(self._owner))
             self._owner = None
         except ValueError:
-            raise LockException('Lock could not be released because it '
-                                'was been acquired by this instance.')
+            raise LockException(
+                "Lock could not be released because it "
+                "was been acquired by this instance."
+            )
         except etcd.EtcdKeyNotFound:
-            raise LockException('Lock could not be released as it has not '
-                                'been acquired')
+            raise LockException(
+                "Lock could not be released as it has not " "been acquired"
+            )
 
     @property
     def _locked(self):
@@ -575,7 +583,7 @@ class EtcdLock(BaseLock):
 
 
 class MCLock(BaseLock):
-    '''
+    """
     Implementation of lock with Memcached as the backend for synchronization.
 
     Basic Usage:
@@ -619,10 +627,10 @@ class MCLock(BaseLock):
     >>> with MCLock('my_lock') as lock:
     ...     # do some stuff with your acquired resource
     ...     pass
-    '''
+    """
 
     def __init__(self, lock_name, **kwargs):
-        '''
+        """
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
         :param str namespace: Optional namespace to namespace lock keys for
@@ -633,20 +641,19 @@ class MCLock(BaseLock):
         :param float retry_interval: set interval for trying acquiring lock
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
-        '''
+        """
 
         super(MCLock, self).__init__(lock_name, **kwargs)
 
         if self.client is None:
-            self.client = pylibmc.Client(['localhost'],
-                                         binary=True)
+            self.client = pylibmc.Client(["localhost"], binary=True)
 
         self._owner = None
 
     @property
     def _key_name(self):
         if self.namespace is not None:
-            key = '%s_%s' % (self.namespace, self.lock_name)
+            key = "%s_%s" % (self.namespace, self.lock_name)
         else:
             key = self.lock_name
         return key
@@ -666,7 +673,7 @@ class MCLock(BaseLock):
 
     def _release(self):
         if self._owner is None:
-            raise LockException('Lock was not set by this process.')
+            raise LockException("Lock was not set by this process.")
 
         resp = self.client.get(self._key_name)
         if resp is not None:
@@ -674,11 +681,14 @@ class MCLock(BaseLock):
                 self.client.delete(self._key_name)
                 self._owner = None
             else:
-                raise LockException('Lock could not be released because it '
-                                    'was been acquired by this instance.')
+                raise LockException(
+                    "Lock could not be released because it "
+                    "was been acquired by this instance."
+                )
         else:
-            raise LockException('Lock could not be released as it has not '
-                                'been acquired')
+            raise LockException(
+                "Lock could not be released as it has not " "been acquired"
+            )
 
     @property
     def _locked(self):
@@ -686,7 +696,7 @@ class MCLock(BaseLock):
 
 
 class KubernetesLock(BaseLock):
-    '''
+    """
     Implementation of lock with Kubernetes resource as the backend for synchronization.
 
     Basic Usage:
@@ -725,7 +735,7 @@ class KubernetesLock(BaseLock):
     >>> with KubernetesLock('my_lock', 'my_namespace') as lock:
     ...     # do some stuff with your acquired resource
     ...     pass
-    '''
+    """
 
     def __init__(
         self,
@@ -733,7 +743,7 @@ class KubernetesLock(BaseLock):
         k8s_namespace: str,
         **kwargs,
     ) -> None:
-        '''
+        """
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
         :param str k8s_namespace: Kubernetes namespace to store the lock in.
@@ -745,17 +755,17 @@ class KubernetesLock(BaseLock):
         :param float retry_interval: set interval for trying acquiring lock
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
-        '''
+        """
         super().__init__(lock_name, **kwargs)
 
         self.k8s_namespace = k8s_namespace
 
         # Verify that all names are compatible with Kubernetes.
-        rfc_1123_dns_label = re.compile('^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{,63}(?<!-)$')
+        rfc_1123_dns_label = re.compile("^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{,63}(?<!-)$")
         err_msg = (
-            '{} must conform to RFC1123\'s definition of a DNS label for KubernetesLock'
+            "{} must conform to RFC1123's definition of a DNS label for KubernetesLock"
         )
-        for attr in ('lock_name', 'k8s_namespace', 'namespace'):
+        for attr in ("lock_name", "k8s_namespace", "namespace"):
             value = getattr(self, attr)
             if value is not None:
                 if rfc_1123_dns_label.match(getattr(self, attr)) is None:
@@ -770,7 +780,7 @@ class KubernetesLock(BaseLock):
     @property
     def _key_name(self):
         if self.namespace is not None:
-            key = '%s-%s' % (self.namespace, self.lock_name)
+            key = "%s-%s" % (self.namespace, self.lock_name)
         else:
             key = self.lock_name
         return key
@@ -812,10 +822,10 @@ class KubernetesLock(BaseLock):
                 ),
             )
         except kubernetes.client.exceptions.ApiException as exc:
-            if exc.reason == 'Conflict':
+            if exc.reason == "Conflict":
                 # Someone has created the Lease before we did.
                 return None
-            raise LockException('Failed to create Lock.') from exc
+            raise LockException("Failed to create Lock.") from exc
 
     def _get_lease(self) -> typing.Optional[kubernetes.client.V1Lease]:
         try:
@@ -824,10 +834,10 @@ class KubernetesLock(BaseLock):
                 namespace=self.k8s_namespace,
             )
         except kubernetes.client.exceptions.ApiException as exc:
-            if exc.reason == 'Not Found':
+            if exc.reason == "Not Found":
                 # Lease did not exist.
                 return None
-            raise LockException('Failed to read Lock.') from exc
+            raise LockException("Failed to read Lock.") from exc
 
     def _replace_lease(
         self,
@@ -840,9 +850,9 @@ class KubernetesLock(BaseLock):
                 body=lease,
             )
         except kubernetes.client.exceptions.ApiException as exc:
-            if exc.reason == 'Conflict':
+            if exc.reason == "Conflict":
                 return None
-            raise LockException('Failed to update Lock.') from exc
+            raise LockException("Failed to update Lock.") from exc
 
     def _delete_lease(self, lease: kubernetes.client.V1Lease) -> None:
         try:
@@ -856,11 +866,11 @@ class KubernetesLock(BaseLock):
                 ),
             )
         except kubernetes.client.exceptions.ApiException as exc:
-            if exc.reason == 'Not Found':
+            if exc.reason == "Not Found":
                 # The Lease has already been acquired by another
                 # instance which is fine.
                 return None
-            raise LockException('Failed to release Lock.') from exc
+            raise LockException("Failed to release Lock.") from exc
 
     def _now(self) -> datetime.datetime:
         return datetime.datetime.now(tz=datetime.timezone.utc)
@@ -913,7 +923,7 @@ class KubernetesLock(BaseLock):
 
     def _release(self) -> None:
         if self._owner is None:
-            raise LockException('Lock was not set by this process.')
+            raise LockException("Lock was not set by this process.")
 
         lease = self._get_lease()
         if lease is not None and self._owner == lease.spec.holder_identity:
@@ -937,7 +947,7 @@ class KubernetesLock(BaseLock):
 
 
 class FileLock(BaseLock):
-    '''
+    """
     Implementation of lock with the file system as the backend for synchronization.
 
     Basic Usage:
@@ -976,10 +986,10 @@ class FileLock(BaseLock):
     >>> with FileLock('my_lock') as lock:
     ...     # do some stuff with your acquired resource
     ...     pass
-    '''
+    """
 
     def __init__(self, lock_name: str, **kwargs) -> None:
-        '''
+        """
         :param str lock_name: name of the lock to uniquely identify the lock
                               between processes.
         :param str namespace: Namespace to namespace lock keys for
@@ -990,11 +1000,11 @@ class FileLock(BaseLock):
         :param float retry_interval: set interval for trying acquiring lock
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
-        '''
+        """
         super().__init__(lock_name, **kwargs)
 
         if self.client is None:
-            self.client = pathlib.Path('/tmp/sherlock')
+            self.client = pathlib.Path("/tmp/sherlock")
         self.client.mkdir(parents=True, exist_ok=True)
 
         self._owner = None
@@ -1002,7 +1012,7 @@ class FileLock(BaseLock):
     @property
     def _key_name(self):
         if self.namespace is not None:
-            key = '%s_%s' % (self.namespace, self.lock_name)
+            key = "%s_%s" % (self.namespace, self.lock_name)
         else:
             key = self.lock_name
         return key
@@ -1017,16 +1027,16 @@ class FileLock(BaseLock):
         return expiry_time.isoformat()
 
     def _has_expired(self, data: dict, now: datetime.datetime) -> datetime:
-        expiry_time = datetime.datetime.fromisoformat(data['expiry_time'])
+        expiry_time = datetime.datetime.fromisoformat(data["expiry_time"])
         return now > expiry_time.astimezone(tz=datetime.timezone.utc)
 
     @property
     def _lock_file(self) -> pathlib.Path:
-        return (self.client / self._key_name).with_suffix('.lock')
+        return (self.client / self._key_name).with_suffix(".lock")
 
     @property
     def _data_file(self) -> pathlib.Path:
-        return (self.client / self._key_name).with_suffix('.json')
+        return (self.client / self._key_name).with_suffix(".json")
 
     def _acquire(self) -> bool:
         owner = str(uuid.uuid4())
@@ -1034,29 +1044,29 @@ class FileLock(BaseLock):
         # Make sure we have unique lock on the file.
         with filelock.FileLock(self._lock_file):
             if self._data_file.exists():
-                with self._data_file.open('r') as f:
+                with self._data_file.open("r") as f:
                     data = json.load(f)
 
                 now = self._now()
                 has_expired = self._has_expired(data, now)
-                if owner != data['owner']:
+                if owner != data["owner"]:
                     if not has_expired:
                         # Someone else holds the lock.
                         return False
 
                     else:
                         # Lock is available for us to take.
-                        data = {'owner': owner, 'expiry_time': self._expiry_time()}
+                        data = {"owner": owner, "expiry_time": self._expiry_time()}
 
                 else:
                     # Same owner so do not set or modify Lease.
                     return False
             else:
-                data = {'owner': owner, 'expiry_time': self._expiry_time()}
+                data = {"owner": owner, "expiry_time": self._expiry_time()}
 
             # Write new data back to file.
             self._data_file.touch()
-            with self._data_file.open('w') as f:
+            with self._data_file.open("w") as f:
                 json.dump(data, f)
 
             # We succeeded in writing to the file so we now hold the lock.
@@ -1065,21 +1075,21 @@ class FileLock(BaseLock):
 
     def _release(self) -> None:
         if self._owner is None:
-            raise LockException('Lock was not set by this process.')
+            raise LockException("Lock was not set by this process.")
 
         with filelock.FileLock(self._lock_file):
             if self._data_file.exists():
-                with self._data_file.open('r') as f:
+                with self._data_file.open("r") as f:
                     data = json.load(f)
 
-                if self._owner == data['owner']:
+                if self._owner == data["owner"]:
                     self._data_file.unlink()
 
     @property
     def _locked(self):
         with filelock.FileLock(self._lock_file):
             if self._data_file.exists():
-                with self._data_file.open('r') as f:
+                with self._data_file.open("r") as f:
                     data = json.load(f)
 
                 if self._has_expired(data, self._now()):
