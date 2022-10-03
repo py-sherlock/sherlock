@@ -4,6 +4,7 @@
 
     A generic lock.
 """
+from __future__ import annotations
 
 __all__ = [
     "LockException",
@@ -24,15 +25,8 @@ import time
 import typing
 import uuid
 
-import etcd
-import filelock
-import kubernetes.client
-import kubernetes.client.exceptions
-import kubernetes.config
-import pylibmc
-import redis
-
-from . import _configuration, backends
+if typing.TYPE_CHECKING:
+    import kubernetes
 
 
 class LockException(Exception):
@@ -101,6 +95,8 @@ class BaseLock(object):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        # Lazy to avoid circular
+        from . import _configuration
 
         self.lock_name = lock_name
 
@@ -286,6 +282,8 @@ class Lock(BaseLock):
                   client object. It instead uses the global custom client
                   object.
         """
+        # Lazy to avoid circular
+        from . import _configuration
 
         # Raise exception if client keyword argument is found
         if "client" in kwargs:
@@ -416,6 +414,10 @@ class RedisLock(BaseLock):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        try:
+            import redis  # noqa: disable=F401
+        except ImportError as exc:
+            raise ImportError("Please install `sherlock` with `redis` extras.") from exc
 
         super(RedisLock, self).__init__(lock_name, **kwargs)
 
@@ -526,6 +528,10 @@ class EtcdLock(BaseLock):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        try:
+            import etcd  # noqa: disable=F401
+        except ImportError as exc:
+            raise ImportError("Please install `sherlock` with `etcd` extras.") from exc
 
         super(EtcdLock, self).__init__(lock_name, **kwargs)
 
@@ -542,6 +548,8 @@ class EtcdLock(BaseLock):
             return "/%s" % self.lock_name
 
     def _acquire(self):
+        import etcd  # noqa: disable=F811
+
         owner = str(uuid.uuid4())
 
         _args = [self._key_name, owner]
@@ -557,11 +565,13 @@ class EtcdLock(BaseLock):
             return True
 
     def _release(self):
+        import etcd  # noqa: disable=F811
+
         if self._owner is None:
             raise LockException("Lock was not set by this process.")
 
         try:
-            resp = self.client.delete(self._key_name, prevValue=str(self._owner))
+            self.client.delete(self._key_name, prevValue=str(self._owner))
             self._owner = None
         except ValueError:
             raise LockException(
@@ -575,6 +585,8 @@ class EtcdLock(BaseLock):
 
     @property
     def _locked(self):
+        import etcd  # noqa: disable=F811
+
         try:
             self.client.get(self._key_name)
             return True
@@ -642,6 +654,12 @@ class MCLock(BaseLock):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        try:
+            import pylibmc  # noqa: disable=F401
+        except ImportError as exc:
+            raise ImportError(
+                "Please install `sherlock` with `memcached` extras."
+            ) from exc
 
         super(MCLock, self).__init__(lock_name, **kwargs)
 
@@ -756,6 +774,13 @@ class KubernetesLock(BaseLock):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        try:
+            import kubernetes  # noqa: disable=F401
+        except ImportError as exc:
+            raise ImportError(
+                "Please install `sherlock` with `kubernetes` extras."
+            ) from exc
+
         super().__init__(lock_name, **kwargs)
 
         self.k8s_namespace = k8s_namespace
@@ -772,10 +797,13 @@ class KubernetesLock(BaseLock):
                     raise ValueError(err_msg.format(attr))
 
         if self.client is None:
+            import kubernetes.client
+            import kubernetes.config
+
             kubernetes.config.load_config()
             self.client = kubernetes.client.CoordinationV1Api()
 
-        self._owner = None
+        self._owner: typing.Optional[str] = None
 
     @property
     def _key_name(self):
@@ -805,6 +833,9 @@ class KubernetesLock(BaseLock):
         self,
         owner: str,
     ) -> typing.Optional[kubernetes.client.V1Lease]:
+        import kubernetes.client
+        import kubernetes.client.exceptions
+
         now = self._now()
         try:
             return self.client.create_namespaced_lease(
@@ -828,6 +859,8 @@ class KubernetesLock(BaseLock):
             raise LockException("Failed to create Lock.") from exc
 
     def _get_lease(self) -> typing.Optional[kubernetes.client.V1Lease]:
+        import kubernetes.client.exceptions
+
         try:
             return self.client.read_namespaced_lease(
                 name=self._key_name,
@@ -843,6 +876,8 @@ class KubernetesLock(BaseLock):
         self,
         lease: kubernetes.client.V1Lease,
     ) -> typing.Optional[kubernetes.client.V1Lease]:
+        import kubernetes.client.exceptions
+
         try:
             return self.client.replace_namespaced_lease(
                 name=self._key_name,
@@ -855,6 +890,9 @@ class KubernetesLock(BaseLock):
             raise LockException("Failed to update Lock.") from exc
 
     def _delete_lease(self, lease: kubernetes.client.V1Lease) -> None:
+        import kubernetes.client
+        import kubernetes.client.exceptions
+
         try:
             self.client.delete_namespaced_lease(
                 name=self._key_name,
@@ -1001,13 +1039,20 @@ class FileLock(BaseLock):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        try:
+            import filelock  # noqa: disable=F401
+        except ImportError as exc:
+            raise ImportError(
+                "Please install `sherlock` with `filelock` extras."
+            ) from exc
+
         super().__init__(lock_name, **kwargs)
 
         if self.client is None:
             self.client = pathlib.Path("/tmp/sherlock")
         self.client.mkdir(parents=True, exist_ok=True)
 
-        self._owner = None
+        self._owner: typing.Optional[str] = None
 
     @property
     def _key_name(self):
@@ -1026,7 +1071,7 @@ class FileLock(BaseLock):
             expiry_time = self._now() + datetime.timedelta(seconds=self.expire)
         return expiry_time.isoformat()
 
-    def _has_expired(self, data: dict, now: datetime.datetime) -> datetime:
+    def _has_expired(self, data: dict, now: datetime.datetime) -> bool:
         expiry_time = datetime.datetime.fromisoformat(data["expiry_time"])
         return now > expiry_time.astimezone(tz=datetime.timezone.utc)
 
@@ -1042,7 +1087,9 @@ class FileLock(BaseLock):
         owner = str(uuid.uuid4())
 
         # Make sure we have unique lock on the file.
-        with filelock.FileLock(self._lock_file):
+        import filelock  # noqa: disable=F811
+
+        with filelock.FileLock(str(self._lock_file.absolute())):
             if self._data_file.exists():
                 with self._data_file.open("r") as f:
                     data = json.load(f)
@@ -1077,7 +1124,9 @@ class FileLock(BaseLock):
         if self._owner is None:
             raise LockException("Lock was not set by this process.")
 
-        with filelock.FileLock(self._lock_file):
+        import filelock  # noqa: disable=F811
+
+        with filelock.FileLock(str(self._lock_file.absolute())):
             if self._data_file.exists():
                 with self._data_file.open("r") as f:
                     data = json.load(f)
@@ -1087,7 +1136,9 @@ class FileLock(BaseLock):
 
     @property
     def _locked(self):
-        with filelock.FileLock(self._lock_file):
+        import filelock  # noqa: disable=F811
+
+        with filelock.FileLock(str(self._lock_file.absolute())):
             if self._data_file.exists():
                 with self._data_file.open("r") as f:
                     data = json.load(f)

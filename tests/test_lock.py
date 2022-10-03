@@ -218,19 +218,19 @@ class TestKubernetesLock(unittest.TestCase):
                 "lock_name",
                 "my-k8s-namespace",
                 "my-namespace",
-                "lock_name must conform to RFC1123's definition of a DNS label for KubernetesLock",
+                "lock_name must conform to RFC1123's definition of a DNS label for KubernetesLock",  # noqa: disable=501
             ),
             (
                 "lock-name",
                 "my_k8s_namespace",
                 "my-namespace",
-                "k8s_namespace must conform to RFC1123's definition of a DNS label for KubernetesLock",
+                "k8s_namespace must conform to RFC1123's definition of a DNS label for KubernetesLock",  # noqa: disable=501
             ),
             (
                 "lock-name",
                 "my-k8s-namespace",
                 "my_namespace",
-                "namespace must conform to RFC1123's definition of a DNS label for KubernetesLock",
+                "namespace must conform to RFC1123's definition of a DNS label for KubernetesLock",  # noqa: disable=501
             ),
         ]
         for lock_name, k8s_namespace, namespace, err_msg in test_cases:
@@ -253,7 +253,7 @@ class TestKubernetesLock(unittest.TestCase):
                 )
             self.assertEqual(cm.exception.args[0], err_msg)
 
-    @patch("sherlock.lock.kubernetes.client.CoordinationV1Api")
+    @patch("kubernetes.client.CoordinationV1Api")
     def test_acquire_create_race_condition(self, mock_client):
         name = "lock"
         k8s_namespace = "default"
@@ -273,7 +273,7 @@ class TestKubernetesLock(unittest.TestCase):
         )
         self.assertFalse(lock._acquire())
 
-    @patch("sherlock.lock.kubernetes.client.CoordinationV1Api")
+    @patch("kubernetes.client.CoordinationV1Api")
     def test_acquire_create_failed(self, mock_client):
         name = "lock"
         k8s_namespace = "default"
@@ -297,7 +297,7 @@ class TestKubernetesLock(unittest.TestCase):
             lock._acquire,
         )
 
-    @patch("sherlock.lock.kubernetes.client.CoordinationV1Api")
+    @patch("kubernetes.client.CoordinationV1Api")
     def test_acquire_get_failed(self, mock_client):
         name = "lock"
         k8s_namespace = "default"
@@ -318,7 +318,7 @@ class TestKubernetesLock(unittest.TestCase):
             lock._acquire,
         )
 
-    @patch("sherlock.lock.kubernetes.client.CoordinationV1Api")
+    @patch("kubernetes.client.CoordinationV1Api")
     def test_acquire_replaced_race_condition(self, mock_client):
         name = "lock"
         k8s_namespace = "default"
@@ -349,7 +349,7 @@ class TestKubernetesLock(unittest.TestCase):
 
         self.assertFalse(lock._acquire())
 
-    @patch("sherlock.lock.kubernetes.client.CoordinationV1Api")
+    @patch("kubernetes.client.CoordinationV1Api")
     def test_acquire_replaced_failed(self, mock_client):
         name = "lock"
         k8s_namespace = "default"
@@ -384,7 +384,7 @@ class TestKubernetesLock(unittest.TestCase):
             lock._acquire,
         )
 
-    @patch("sherlock.lock.kubernetes.client.CoordinationV1Api")
+    @patch("kubernetes.client.CoordinationV1Api")
     def test_release_delete_race_condition(self, mock_client):
         name = "lock"
         k8s_namespace = "default"
@@ -417,7 +417,7 @@ class TestKubernetesLock(unittest.TestCase):
         # This should return without issue.
         self.assertIsNone(lock.release())
 
-    @patch("sherlock.lock.kubernetes.client.CoordinationV1Api")
+    @patch("kubernetes.client.CoordinationV1Api")
     def test_release_delete_failed(self, mock_client):
         name = "lock"
         k8s_namespace = "default"
