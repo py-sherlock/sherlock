@@ -109,17 +109,17 @@ class BaseLock(object):
         else:
             self.namespace = _configuration.namespace
 
-        if "expire" not in kwargs:
-            self.expire = _configuration.expire
-        else:
+        if "expire" in kwargs:
             self.expire = kwargs["expire"]
+        else:
+            self.expire = _configuration.expire
 
-        if kwargs.get("timeout"):
+        if "timeout" in kwargs:
             self.timeout = kwargs["timeout"]
         else:
             self.timeout = _configuration.timeout
 
-        if kwargs.get("retry_interval"):
+        if "retry_interval" in kwargs:
             self.retry_interval = kwargs["retry_interval"]
         else:
             self.retry_interval = _configuration.retry_interval
