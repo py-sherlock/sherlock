@@ -72,7 +72,7 @@ Installation is simple.
 
 .. code:: bash
 
-    pip install sherlock
+    pip install sherlock[all]
 
 .. note:: Sherlock will install all the client libraries for all the
           supported backends.
