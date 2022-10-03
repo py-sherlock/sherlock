@@ -227,11 +227,12 @@ Distributed Locking in Other Languages
 * NodeJS - https://github.com/thedeveloper/warlock
 '''
 
-import etcd
 import pathlib
+
+import etcd
+import kubernetes.client
 import pylibmc
 import redis
-import kubernetes.client
 
 
 class _Backends(object):

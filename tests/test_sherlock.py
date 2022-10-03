@@ -2,12 +2,12 @@
     Tests for some basic package's root level functionality.
 '''
 
-import etcd
-import sherlock
 import unittest
 from unittest.mock import Mock
 
+import etcd
 
+import sherlock
 from sherlock import _Configuration
 
 # import reload in Python 3

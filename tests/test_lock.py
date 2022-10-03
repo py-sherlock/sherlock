@@ -3,13 +3,15 @@
 '''
 
 import datetime
+import unittest
+from unittest.mock import Mock, patch
+
 import etcd
 import kubernetes.client
 import kubernetes.client.exceptions
 import redis
+
 import sherlock
-import unittest
-from unittest.mock import Mock, patch
 
 # import reload in Python 3
 try:

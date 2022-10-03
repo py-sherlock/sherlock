@@ -17,22 +17,22 @@ __all__ = [
 ]
 
 import datetime
-import etcd
-import filelock
 import json
-import kubernetes.client
-import kubernetes.client.exceptions
-import kubernetes.config
 import pathlib
-import pylibmc
 import re
-import redis
 import time
 import typing
 import uuid
 
-from . import backends
-from . import _configuration
+import etcd
+import filelock
+import kubernetes.client
+import kubernetes.client.exceptions
+import kubernetes.config
+import pylibmc
+import redis
+
+from . import _configuration, backends
 
 
 class LockException(Exception):

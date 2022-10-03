@@ -4,18 +4,20 @@
 
 import datetime
 import json
+import os
 import pathlib
+import time
+import unittest
 from unittest.mock import patch
+
 import etcd
 import kubernetes.client
 import kubernetes.client.exceptions
 import kubernetes.config
-import os
 import pylibmc
 import redis
+
 import sherlock
-import time
-import unittest
 
 
 class TestRedisLock(unittest.TestCase):
