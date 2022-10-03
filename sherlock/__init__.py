@@ -228,17 +228,36 @@ Distributed Locking in Other Languages
 """  # noqa: disable=E501
 
 import pathlib
-import typing
 
 # Import important Lock classes
 from . import lock
 from .lock import *  # noqa: disable=F401
 
-if typing.TYPE_CHECKING:
+try:
     import etcd
+except ImportError:
+    etcd = None  # type: ignore
+
+try:
+    import kubernetes
     import kubernetes.client
+except ImportError:
+    kubernetes = None  # type: ignore
+
+try:
     import pylibmc
+except ImportError:
+    pylibmc = None  # type: ignore
+
+try:
     import redis
+except ImportError:
+    redis = None  # type: ignore
+
+try:
+    import filelock
+except ImportError:
+    filelock = None  # type: ignore
 
 
 class _Backends(object):
@@ -246,56 +265,64 @@ class _Backends(object):
     A simple object that provides a list of available backends.
     """
 
-    REDIS = {
-        "name": "REDIS",
-        "library": "redis",
-        "client_class": redis.StrictRedis,
-        "lock_class": "RedisLock",
-        "default_args": (),
-        "default_kwargs": {},
-    }
-    ETCD = {
-        "name": "ETCD",
-        "library": "etcd",
-        "client_class": etcd.Client,
-        "lock_class": "EtcdLock",
-        "default_args": (),
-        "default_kwargs": {},
-    }
-    MEMCACHED = {
-        "name": "MEMCACHED",
-        "library": "pylibmc",
-        "client_class": pylibmc.Client,
-        "lock_class": "MCLock",
-        "default_args": (["localhost"],),
-        "default_kwargs": {
-            "binary": True,
-        },
-    }
-    KUBERNETES = {
-        "name": "KUBERNETES",
-        "library": "kubernetes",
-        "client_class": kubernetes.client.CoordinationV1Api,
-        "lock_class": "KubernetesLock",
-        "default_args": (),
-        "default_kwargs": {},
-    }
-    FILE = {
-        "name": "FILE",
-        "library": "pathlib",
-        "client_class": pathlib.Path,
-        "lock_class": "FileLock",
-        "default_args": ("/tmp/sherlock",),
-        "default_kwargs": {},
-    }
+    _valid_backends = []
 
-    _valid_backends = (
-        REDIS,
-        ETCD,
-        MEMCACHED,
-        KUBERNETES,
-        FILE,
-    )
+    if redis is not None:
+        REDIS = {
+            "name": "REDIS",
+            "library": "redis",
+            "client_class": redis.StrictRedis,
+            "lock_class": "RedisLock",
+            "default_args": (),
+            "default_kwargs": {},
+        }
+        _valid_backends.append(REDIS)
+
+    if etcd is not None:
+        ETCD = {
+            "name": "ETCD",
+            "library": "etcd",
+            "client_class": etcd.Client,
+            "lock_class": "EtcdLock",
+            "default_args": (),
+            "default_kwargs": {},
+        }
+        _valid_backends.append(ETCD)
+
+    if pylibmc is not None:
+        MEMCACHED = {
+            "name": "MEMCACHED",
+            "library": "pylibmc",
+            "client_class": pylibmc.Client,
+            "lock_class": "MCLock",
+            "default_args": (["localhost"],),
+            "default_kwargs": {
+                "binary": True,
+            },
+        }
+        _valid_backends.append(MEMCACHED)
+
+    if kubernetes is not None:
+        KUBERNETES = {
+            "name": "KUBERNETES",
+            "library": "kubernetes",
+            "client_class": kubernetes.client.CoordinationV1Api,
+            "lock_class": "KubernetesLock",
+            "default_args": (),
+            "default_kwargs": {},
+        }
+        _valid_backends.append(KUBERNETES)
+
+    if filelock is not None:
+        FILE = {
+            "name": "FILE",
+            "library": "pathlib",
+            "client_class": pathlib.Path,
+            "lock_class": "FileLock",
+            "default_args": ("/tmp/sherlock",),
+            "default_kwargs": {},
+        }
+        _valid_backends.append(FILE)
 
     def register(
         self,

@@ -4,6 +4,7 @@
 
     A generic lock.
 """
+from __future__ import annotations
 
 __all__ = [
     "LockException",
@@ -24,14 +25,8 @@ import time
 import typing
 import uuid
 
-from . import _configuration
-
 if typing.TYPE_CHECKING:
-    import etcd
-    import filelock
     import kubernetes
-    import pylibmc  # noqa: disable=F401
-    import redis  # noqa: disable=F401
 
 
 class LockException(Exception):
@@ -100,6 +95,8 @@ class BaseLock(object):
                                      after the timeout interval has elapsed.
         :param client: supported client object for the backend of your choice.
         """
+        # Lazy to avoid circular
+        from . import _configuration
 
         self.lock_name = lock_name
 
@@ -285,6 +282,8 @@ class Lock(BaseLock):
                   client object. It instead uses the global custom client
                   object.
         """
+        # Lazy to avoid circular
+        from . import _configuration
 
         # Raise exception if client keyword argument is found
         if "client" in kwargs:
@@ -549,6 +548,8 @@ class EtcdLock(BaseLock):
             return "/%s" % self.lock_name
 
     def _acquire(self):
+        import etcd  # noqa: disable=F811
+
         owner = str(uuid.uuid4())
 
         _args = [self._key_name, owner]
@@ -564,6 +565,8 @@ class EtcdLock(BaseLock):
             return True
 
     def _release(self):
+        import etcd  # noqa: disable=F811
+
         if self._owner is None:
             raise LockException("Lock was not set by this process.")
 
@@ -582,6 +585,8 @@ class EtcdLock(BaseLock):
 
     @property
     def _locked(self):
+        import etcd  # noqa: disable=F811
+
         try:
             self.client.get(self._key_name)
             return True
@@ -770,9 +775,7 @@ class KubernetesLock(BaseLock):
         :param client: supported client object for the backend of your choice.
         """
         try:
-            import kubernetes.client  # noqa: disable=F401
-            import kubernetes.client.exceptions  # noqa: disable=F401
-            import kubernetes.config  # noqa: disable=F401
+            import kubernetes  # noqa: disable=F401
         except ImportError as exc:
             raise ImportError(
                 "Please install `sherlock` with `kubernetes` extras."
@@ -794,6 +797,9 @@ class KubernetesLock(BaseLock):
                     raise ValueError(err_msg.format(attr))
 
         if self.client is None:
+            import kubernetes.client
+            import kubernetes.config
+
             kubernetes.config.load_config()
             self.client = kubernetes.client.CoordinationV1Api()
 
@@ -827,6 +833,9 @@ class KubernetesLock(BaseLock):
         self,
         owner: str,
     ) -> typing.Optional[kubernetes.client.V1Lease]:
+        import kubernetes.client
+        import kubernetes.client.exceptions
+
         now = self._now()
         try:
             return self.client.create_namespaced_lease(
@@ -850,6 +859,8 @@ class KubernetesLock(BaseLock):
             raise LockException("Failed to create Lock.") from exc
 
     def _get_lease(self) -> typing.Optional[kubernetes.client.V1Lease]:
+        import kubernetes.client.exceptions
+
         try:
             return self.client.read_namespaced_lease(
                 name=self._key_name,
@@ -865,6 +876,8 @@ class KubernetesLock(BaseLock):
         self,
         lease: kubernetes.client.V1Lease,
     ) -> typing.Optional[kubernetes.client.V1Lease]:
+        import kubernetes.client.exceptions
+
         try:
             return self.client.replace_namespaced_lease(
                 name=self._key_name,
@@ -877,6 +890,9 @@ class KubernetesLock(BaseLock):
             raise LockException("Failed to update Lock.") from exc
 
     def _delete_lease(self, lease: kubernetes.client.V1Lease) -> None:
+        import kubernetes.client
+        import kubernetes.client.exceptions
+
         try:
             self.client.delete_namespaced_lease(
                 name=self._key_name,
@@ -1071,6 +1087,8 @@ class FileLock(BaseLock):
         owner = str(uuid.uuid4())
 
         # Make sure we have unique lock on the file.
+        import filelock  # noqa: disable=F811
+
         with filelock.FileLock(str(self._lock_file.absolute())):
             if self._data_file.exists():
                 with self._data_file.open("r") as f:
@@ -1106,6 +1124,8 @@ class FileLock(BaseLock):
         if self._owner is None:
             raise LockException("Lock was not set by this process.")
 
+        import filelock  # noqa: disable=F811
+
         with filelock.FileLock(str(self._lock_file.absolute())):
             if self._data_file.exists():
                 with self._data_file.open("r") as f:
@@ -1116,7 +1136,9 @@ class FileLock(BaseLock):
 
     @property
     def _locked(self):
-        with filelock.FileLock(self._lock_file):
+        import filelock  # noqa: disable=F811
+
+        with filelock.FileLock(str(self._lock_file.absolute())):
             if self._data_file.exists():
                 with self._data_file.open("r") as f:
                     data = json.load(f)
