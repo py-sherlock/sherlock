@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: sherlock
+  annotations:
+    github.com/project-slug: vaidik/sherlock
+spec:
+  type: other
+  lifecycle: unknown
+  owner: roadie
