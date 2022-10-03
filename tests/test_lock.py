@@ -218,19 +218,19 @@ class TestKubernetesLock(unittest.TestCase):
                 "lock_name",
                 "my-k8s-namespace",
                 "my-namespace",
-                "lock_name must conform to RFC1123's definition of a DNS label for KubernetesLock",
+                "lock_name must conform to RFC1123's definition of a DNS label for KubernetesLock",  # noqa: disable=501
             ),
             (
                 "lock-name",
                 "my_k8s_namespace",
                 "my-namespace",
-                "k8s_namespace must conform to RFC1123's definition of a DNS label for KubernetesLock",
+                "k8s_namespace must conform to RFC1123's definition of a DNS label for KubernetesLock",  # noqa: disable=501
             ),
             (
                 "lock-name",
                 "my-k8s-namespace",
                 "my_namespace",
-                "namespace must conform to RFC1123's definition of a DNS label for KubernetesLock",
+                "namespace must conform to RFC1123's definition of a DNS label for KubernetesLock",  # noqa: disable=501
             ),
         ]
         for lock_name, k8s_namespace, namespace, err_msg in test_cases:

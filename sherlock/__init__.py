@@ -225,14 +225,20 @@ Distributed Locking in Other Languages
 --------------------------------------
 
 * NodeJS - https://github.com/thedeveloper/warlock
-"""
+"""  # noqa: disable=E501
 
 import pathlib
+import typing
 
-import etcd
-import kubernetes.client
-import pylibmc
-import redis
+# Import important Lock classes
+from . import lock
+from .lock import *  # noqa: disable=F401
+
+if typing.TYPE_CHECKING:
+    import etcd
+    import kubernetes.client
+    import pylibmc
+    import redis
 
 
 class _Backends(object):
@@ -537,7 +543,3 @@ backends = _Backends()
 
 # Create a configuration singleton
 _configuration = _Configuration()
-
-# Import important Lock classes
-from . import lock
-from .lock import *
