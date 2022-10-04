@@ -24,7 +24,6 @@ if typing.TYPE_CHECKING:
 __all__ = [
     "LockException",
     "LockTimeoutException",
-    "Lock",
     "RedisLock",
     "EtcdLock",
     "MCLock",

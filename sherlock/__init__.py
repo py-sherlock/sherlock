@@ -231,33 +231,28 @@ import pathlib
 
 # Import important Lock classes
 from . import lock
-from .lock import *  # noqa: disable=F401
+from .lock import (
+    EtcdLock,
+    FileLock,
+    KubernetesLock,
+    LockException,
+    LockTimeoutException,
+    MCLock,
+    RedisLock,
+)
 
-try:
-    import etcd
-except ImportError:
-    etcd = None  # type: ignore
-
-try:
-    import kubernetes
-    import kubernetes.client
-except ImportError:
-    kubernetes = None  # type: ignore
-
-try:
-    import pylibmc
-except ImportError:
-    pylibmc = None  # type: ignore
-
-try:
-    import redis
-except ImportError:
-    redis = None  # type: ignore
-
-try:
-    import filelock
-except ImportError:
-    filelock = None  # type: ignore
+__all__ = [
+    "backends",
+    "configure",
+    "LockException",
+    "LockTimeoutException",
+    "Lock",
+    "RedisLock",
+    "EtcdLock",
+    "MCLock",
+    "KubernetesLock",
+    "FileLock",
+]
 
 
 class _Backends(object):
@@ -267,7 +262,9 @@ class _Backends(object):
 
     _valid_backends = []
 
-    if redis is not None:
+    try:
+        import redis
+
         REDIS = {
             "name": "REDIS",
             "library": "redis",
@@ -277,8 +274,12 @@ class _Backends(object):
             "default_kwargs": {},
         }
         _valid_backends.append(REDIS)
+    except ImportError:
+        pass
 
-    if etcd is not None:
+    try:
+        import etcd
+
         ETCD = {
             "name": "ETCD",
             "library": "etcd",
@@ -288,8 +289,12 @@ class _Backends(object):
             "default_kwargs": {},
         }
         _valid_backends.append(ETCD)
+    except ImportError:
+        pass
 
-    if pylibmc is not None:
+    try:
+        import pylibmc
+
         MEMCACHED = {
             "name": "MEMCACHED",
             "library": "pylibmc",
@@ -301,8 +306,12 @@ class _Backends(object):
             },
         }
         _valid_backends.append(MEMCACHED)
+    except ImportError:
+        pass
 
-    if kubernetes is not None:
+    try:
+        import kubernetes.client
+
         KUBERNETES = {
             "name": "KUBERNETES",
             "library": "kubernetes",
@@ -312,8 +321,10 @@ class _Backends(object):
             "default_kwargs": {},
         }
         _valid_backends.append(KUBERNETES)
+    except ImportError:
+        pass
 
-    if filelock is not None:
+    try:
         FILE = {
             "name": "FILE",
             "library": "pathlib",
@@ -323,6 +334,8 @@ class _Backends(object):
             "default_kwargs": {},
         }
         _valid_backends.append(FILE)
+    except ImportError:
+        pass
 
     def register(
         self,
