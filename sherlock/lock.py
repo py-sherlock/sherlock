@@ -206,8 +206,22 @@ class BaseLock(object):
 
         return self._release()
 
+    def _renew(self) -> bool:
+        """
+        Implementation of renewing an acquired lock. Must be implemented in
+        the sub-class.
+        """
+        raise NotImplemented("Must be implemented in the sub-class")
+
+    def renew(self) -> bool:
+        """
+        Renew a lock that is already acquired.
+        """
+        return self._renew()
+
     def __enter__(self):
         self.acquire()
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.release()
@@ -330,6 +344,15 @@ class Lock(BaseLock):
             )
         return self._lock_proxy.release()
 
+    def _renew(self) -> bool:
+        if self._lock_proxy is None:
+            raise LockException(
+                "Lock backend has not been configured and "
+                "lock cannot be acquired or released. "
+                "Configure lock backend first."
+            )
+        return self._lock_proxy.renew()
+
     @property
     def _locked(self):
         if self._lock_proxy is None:
@@ -405,6 +428,19 @@ class RedisLock(BaseLock):
     return result
     """
 
+    _renew_script = """
+    local result = 0
+    if redis.call('GET', KEYS[1]) == KEYS[2] then
+        if KEYS[3] ~= -1 then
+            redis.call('EXPIRE', KEYS[1], KEYS[3])
+        else
+            redis.call('PERSIST', KEYS[1])
+        end
+        result = 1
+    end
+    return result
+    """
+
     def __init__(self, lock_name, **kwargs):
         """
         :param str lock_name: name of the lock to uniquely identify the lock
@@ -433,6 +469,7 @@ class RedisLock(BaseLock):
         # Register Lua script
         self._acquire_func = self.client.register_script(self._acquire_script)
         self._release_func = self.client.register_script(self._release_script)
+        self._renew_func = self.client.register_script(self._renew_script)
 
     @property
     def _key_name(self):
@@ -464,6 +501,14 @@ class RedisLock(BaseLock):
             )
 
         self._owner = None
+
+    def _renew(self) -> bool:
+        if self._owner is None:
+            raise LockException("Lock was not set by this process.")
+
+        if self._release_func(keys=[self._key_name, self._owner, self.expire]) != 1:
+            return False
+        return True
 
     @property
     def _locked(self):
@@ -578,6 +623,23 @@ class EtcdLock(BaseLock):
             raise LockException(
                 "Lock could not be released as it has not been acquired"
             )
+
+    def _renew(self) -> bool:
+        if self._owner is None:
+            raise LockException("Lock was not set by this process.")
+
+        try:
+            self.client.write(
+                self._key_name,
+                None,
+                ttl=self.expire,
+                prevValue=self._owner,
+                prevExist=True,
+                refresh=True,
+            )
+            return True
+        except (etcd.EtcdCompareFailed, etcd.EtcdKeyNotFound):
+            return False
 
     @property
     def _locked(self):
@@ -701,6 +763,21 @@ class MCLock(BaseLock):
             raise LockException(
                 "Lock could not be released as it has not " "been acquired"
             )
+
+    def _renew(self) -> bool:
+        if self._owner is None:
+            raise LockException("Lock was not set by this process.")
+
+        resp = self.client.get(self._key_name)
+        if resp is not None:
+            if resp == str(self._owner):
+                _args = [self._key_name, self._owner]
+                if self.expire is not None:
+                    _args.append(self.expire)
+                # Update key with new TTL
+                self.client.set(*_args)
+                return True
+        return False
 
     @property
     def _locked(self):
@@ -953,6 +1030,33 @@ class KubernetesLock(BaseLock):
             # protects us from race conditions in deleting the Lease.
             self._delete_lease(lease)
 
+    def _renew(self) -> bool:
+        if self._owner is None:
+            raise LockException("Lock was not set by this process.")
+
+        lease = self._get_lease()
+        if lease is not None and self._owner == lease.spec.holder_identity:
+            now = self._now()
+            has_expired = self._has_expired(lease, now)
+
+            if has_expired:
+                return False
+
+            lease.spec.acquire_time = now
+            lease.spec.renew_time = now
+            lease.spec.lease_duration_seconds = self.expire
+            # The Lease object contains a `.metadata.resource_version` which
+            # protects us from race conditions in updating the Lease as described:
+            # https://blog.atomist.com/kubernetes-apply-replace-patch/.
+            if self._replace_lease(lease) is None:
+                # Someone else has modified the Lease before we renewed it so it
+                # must've expired.
+                raise False
+            return True
+
+        return False
+
+
     @property
     def _locked(self):
         lease = self._get_lease()
@@ -1106,6 +1210,25 @@ class FileLock(BaseLock):
 
                 if self._owner == data["owner"]:
                     self._data_file.unlink()
+
+    def _renew(self) -> bool:
+        if self._owner is None:
+            raise LockException("Lock was not set by this process.")
+
+        if self._data_file.exists():
+            with self._lock_file:
+                data = json.loads(self._data_file.read_text())
+
+                now = self._now()
+                has_expired = self._has_expired(data, now)
+                if self._owner == data["owner"]:
+                    if has_expired:
+                        return False
+                    # Refresh expiry time.
+                    data["expiry_time"] = self._expiry_time()
+                    self._data_file.write_text(json.dumps(data))
+                    return True
+        return False
 
     @property
     def _locked(self):
