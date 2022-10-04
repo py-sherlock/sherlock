@@ -554,10 +554,6 @@ class EtcdLock(BaseLock):
     def _acquire(self):
         owner = str(uuid.uuid4())
 
-        _args = [self._key_name, owner]
-        if self.expire is not None:
-            _args.append(self.expire)
-
         try:
             self.client.write(self._key_name, owner, prevExist=False, ttl=self.expire)
             self._owner = owner
