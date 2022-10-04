@@ -11,7 +11,6 @@ import importlib
 import json
 import pathlib
 import re
-import signal
 import time
 import typing
 import uuid
