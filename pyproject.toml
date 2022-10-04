@@ -40,6 +40,7 @@ python-etcd = { version = "^0.4.5", optional = true }
 pylibmc = { version = "^1.6.1", optional = true }
 
 [tool.poetry.group.dev.dependencies]
+black = "^22.8.0"
 flake8 = "^5.0.4"
 flake8-pyproject = "^1.1.0.post0"
 mypy = "^0.981"
