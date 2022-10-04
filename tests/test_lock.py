@@ -3,6 +3,8 @@
 """
 
 import datetime
+import pathlib
+import tempfile
 import unittest
 from importlib import reload
 from unittest.mock import Mock, patch
@@ -461,18 +463,25 @@ class TestFileLock(unittest.TestCase):
 
     def test_valid_key_names_are_generated_when_namespace_not_set(self):
         name = "lock"
-        lock = sherlock.lock.FileLock(name, client=Mock())
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lock = sherlock.lock.FileLock(name, client=pathlib.Path(tmpdir))
+
         self.assertEqual(lock._key_name, name)
 
     def test_valid_key_names_are_generated_when_namespace_is_set(self):
         name = "lock"
-        lock = sherlock.lock.FileLock(
-            name,
-            client=Mock(),
-            namespace="local_namespace",
-        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lock = sherlock.lock.FileLock(
+                name,
+                client=pathlib.Path(tmpdir),
+                namespace="local_namespace",
+            )
+
         self.assertEqual(lock._key_name, "local_namespace_%s" % name)
 
         sherlock.configure(namespace="global_namespace")
-        lock = sherlock.lock.FileLock(name, client=Mock())
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lock = sherlock.lock.FileLock(name, client=pathlib.Path(tmpdir))
         self.assertEqual(lock._key_name, "global_namespace_%s" % name)
