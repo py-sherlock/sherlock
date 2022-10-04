@@ -211,7 +211,7 @@ class BaseLock(object):
         Implementation of renewing an acquired lock. Must be implemented in
         the sub-class.
         """
-        raise NotImplemented("Must be implemented in the sub-class")
+        raise NotImplementedError("Must be implemented in the sub-class")
 
     def renew(self) -> bool:
         """
@@ -1055,7 +1055,6 @@ class KubernetesLock(BaseLock):
             return True
 
         return False
-
 
     @property
     def _locked(self):

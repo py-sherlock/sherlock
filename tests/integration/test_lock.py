@@ -103,20 +103,12 @@ class TestRedisLock(unittest.TestCase):
         self.assertEqual(self.client.get(self.lock_name), None)
 
     def test_renew(self):
-        lock = sherlock.lock.RedisLock(
-            self.lock_name,
-            client=self.client,
-            expire=3600
-        )
+        lock = sherlock.lock.RedisLock(self.lock_name, client=self.client, expire=3600)
         self.assertTrue(lock.acquire())
         lock.renew()
 
     def test_renew_expired(self):
-        lock = sherlock.RedisLock(
-            self.lock_name,
-            client=self.client,
-            expire=1
-        )
+        lock = sherlock.RedisLock(self.lock_name, client=self.client, expire=1)
         self.assertTrue(lock.acquire())
         time.sleep(2)
 
@@ -140,12 +132,10 @@ class TestRedisLock(unittest.TestCase):
         self.assertFalse(lock_1.renew())
 
     def test_renew_before_acquire(self):
-        lock = sherlock.RedisLock(
-            self.lock_name,
-            client=self.client,
-            expire=1
-        )
-        with self.assertRaisesRegex(sherlock.LockException, "Lock was not set by this process."):
+        lock = sherlock.RedisLock(self.lock_name, client=self.client, expire=1)
+        with self.assertRaisesRegex(
+            sherlock.LockException, "Lock was not set by this process."
+        ):
             lock.renew()
 
     def tearDown(self):
@@ -225,20 +215,12 @@ class TestEtcdLock(unittest.TestCase):
         self.assertRaises(etcd.EtcdKeyNotFound, self.client.get, self.lock_name)
 
     def test_renew(self):
-        lock = sherlock.lock.EtcdLock(
-            self.lock_name,
-            client=self.client,
-            expire=3600
-        )
+        lock = sherlock.lock.EtcdLock(self.lock_name, client=self.client, expire=3600)
         self.assertTrue(lock.acquire())
         lock.renew()
 
     def test_renew_expired(self):
-        lock = sherlock.EtcdLock(
-            self.lock_name,
-            client=self.client,
-            expire=1
-        )
+        lock = sherlock.EtcdLock(self.lock_name, client=self.client, expire=1)
         self.assertTrue(lock.acquire())
         time.sleep(2)
 
@@ -262,12 +244,10 @@ class TestEtcdLock(unittest.TestCase):
         self.assertFalse(lock_1.renew())
 
     def test_renew_before_acquire(self):
-        lock = sherlock.EtcdLock(
-            self.lock_name,
-            client=self.client,
-            expire=1
-        )
-        with self.assertRaisesRegex(sherlock.LockException, "Lock was not set by this process."):
+        lock = sherlock.EtcdLock(self.lock_name, client=self.client, expire=1)
+        with self.assertRaisesRegex(
+            sherlock.LockException, "Lock was not set by this process."
+        ):
             lock.renew()
 
     def tearDown(self):
@@ -346,20 +326,12 @@ class TestMCLock(unittest.TestCase):
         self.assertEqual(self.client.get(self.lock_name), None)
 
     def test_renew(self):
-        lock = sherlock.lock.MCLock(
-            self.lock_name,
-            client=self.client,
-            expire=3600
-        )
+        lock = sherlock.lock.MCLock(self.lock_name, client=self.client, expire=3600)
         self.assertTrue(lock.acquire())
         lock.renew()
 
     def test_renew_expired(self):
-        lock = sherlock.lock.MCLock(
-            self.lock_name,
-            client=self.client,
-            expire=1
-        )
+        lock = sherlock.lock.MCLock(self.lock_name, client=self.client, expire=1)
         self.assertTrue(lock.acquire())
         time.sleep(1)
         self.assertFalse(lock.renew())
@@ -382,12 +354,10 @@ class TestMCLock(unittest.TestCase):
         self.assertFalse(lock_1.renew())
 
     def test_renew_before_acquire(self):
-        lock = sherlock.lock.MCLock(
-            self.lock_name,
-            client=self.client,
-            expire=1
-        )
-        with self.assertRaisesRegex(sherlock.LockException, "Lock was not set by this process."):
+        lock = sherlock.lock.MCLock(self.lock_name, client=self.client, expire=1)
+        with self.assertRaisesRegex(
+            sherlock.LockException, "Lock was not set by this process."
+        ):
             lock.renew()
 
     def tearDown(self):
@@ -575,11 +545,7 @@ class TestKubernetesLock(unittest.TestCase):
         self.assertIsNone(lock_1.release())
 
     def test_renew(self):
-        lock = sherlock.KubernetesLock(
-            self.lock_name,
-            self.k8s_namespace,
-            expire=3600
-        )
+        lock = sherlock.KubernetesLock(self.lock_name, self.k8s_namespace, expire=3600)
         self.assertTrue(lock.acquire())
         first_expiry_time = lock._expiry_time(lock._get_lease())
         lock.renew()
@@ -587,11 +553,7 @@ class TestKubernetesLock(unittest.TestCase):
         self.assertGreater(second_expiry_time, first_expiry_time)
 
     def test_renew_expired(self):
-        lock = sherlock.KubernetesLock(
-            self.lock_name,
-            self.k8s_namespace,
-            expire=1
-        )
+        lock = sherlock.KubernetesLock(self.lock_name, self.k8s_namespace, expire=1)
         self.assertTrue(lock.acquire())
         first_expiry_time = lock._expiry_time(lock._get_lease())
 
@@ -619,12 +581,10 @@ class TestKubernetesLock(unittest.TestCase):
         self.assertFalse(lock_1.renew())
 
     def test_renew_before_acquire(self):
-        lock = sherlock.KubernetesLock(
-            self.lock_name,
-            self.k8s_namespace,
-            expire=1
-        )
-        with self.assertRaisesRegex(sherlock.LockException, "Lock was not set by this process."):
+        lock = sherlock.KubernetesLock(self.lock_name, self.k8s_namespace, expire=1)
+        with self.assertRaisesRegex(
+            sherlock.LockException, "Lock was not set by this process."
+        ):
             lock.renew()
 
     def tearDown(self):
@@ -815,11 +775,7 @@ class TestFileLock(unittest.TestCase):
         self.assertIsNone(lock_1.release())
 
     def test_renew(self):
-        lock = sherlock.FileLock(
-            self.lock_name,
-            client=self.client,
-            expire=3600
-        )
+        lock = sherlock.FileLock(self.lock_name, client=self.client, expire=3600)
         self.assertTrue(lock.acquire())
         first_expiry_time = datetime.datetime.fromisoformat(
             self._load_file(self.lock_name)["expiry_time"]
@@ -831,11 +787,7 @@ class TestFileLock(unittest.TestCase):
         self.assertGreater(second_expiry_time, first_expiry_time)
 
     def test_renew_expired(self):
-        lock = sherlock.FileLock(
-            self.lock_name,
-            client=self.client,
-            expire=1
-        )
+        lock = sherlock.FileLock(self.lock_name, client=self.client, expire=1)
         self.assertTrue(lock.acquire())
         first_expiry_time = datetime.datetime.fromisoformat(
             self._load_file(self.lock_name)["expiry_time"]
@@ -867,14 +819,11 @@ class TestFileLock(unittest.TestCase):
         self.assertFalse(lock_1.renew())
 
     def test_renew_before_acquire(self):
-        lock = sherlock.FileLock(
-            self.lock_name,
-            client=self.client,
-            expire=1
-        )
-        with self.assertRaisesRegex(sherlock.LockException, "Lock was not set by this process."):
+        lock = sherlock.FileLock(self.lock_name, client=self.client, expire=1)
+        with self.assertRaisesRegex(
+            sherlock.LockException, "Lock was not set by this process."
+        ):
             lock.renew()
-
 
     def tearDown(self):
         for file in self.client.iterdir():
