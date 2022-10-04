@@ -231,15 +231,7 @@ import pathlib
 
 # Import important Lock classes
 from . import lock
-from .lock import (
-    EtcdLock,
-    FileLock,
-    KubernetesLock,
-    LockException,
-    LockTimeoutException,
-    MCLock,
-    RedisLock,
-)
+from .lock import Lock, LockException, LockTimeoutException
 
 __all__ = [
     "backends",
@@ -247,11 +239,6 @@ __all__ = [
     "LockException",
     "LockTimeoutException",
     "Lock",
-    "RedisLock",
-    "EtcdLock",
-    "MCLock",
-    "KubernetesLock",
-    "FileLock",
 ]
 
 

@@ -22,6 +22,7 @@ if typing.TYPE_CHECKING:
 
 
 __all__ = [
+    "Lock",
     "LockException",
     "LockTimeoutException",
     "RedisLock",
