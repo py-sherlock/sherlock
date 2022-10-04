@@ -42,7 +42,7 @@ pylibmc = { version = "^1.6.1", optional = true }
 [tool.poetry.group.dev.dependencies]
 black = "^22.8.0"
 flake8 = "^5.0.4"
-flake8-pyproject = "^1.1.0.post0"
+isort = "^5.10.1"
 mypy = "^0.981"
 pycodestyle = "^2.9.1"
 pytest = "^7.1.2"
