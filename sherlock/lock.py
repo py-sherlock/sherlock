@@ -567,7 +567,7 @@ class EtcdLock(BaseLock):
             raise LockException("Lock was not set by this process.")
 
         try:
-            self.client.delete(self._key_name, prevValue=str(self._owner))
+            self.client.delete(self._key_name, prevValue=self._owner)
             self._owner = None
         except ValueError:
             raise LockException(
@@ -804,10 +804,7 @@ class KubernetesLock(BaseLock):
             key = self.lock_name
         return key
 
-    def _has_expired(
-        self, lease: kubernetes.client.V1Lease, now: datetime.datetime
-    ) -> bool:
-        # Determine whether the Lease has expired.
+    def _expiry_time(self, lease: kubernetes.client.V1Lease) -> datetime.datetime:
         expiry_time = datetime.datetime.min
         if (
             lease.spec.renew_time is not None
@@ -818,7 +815,13 @@ class KubernetesLock(BaseLock):
             )
         elif lease.spec.lease_duration_seconds is None:
             expiry_time = datetime.datetime.max
-        return now > expiry_time.astimezone(tz=datetime.timezone.utc)
+        return expiry_time.astimezone(tz=datetime.timezone.utc)
+
+    def _has_expired(
+        self, lease: kubernetes.client.V1Lease, now: datetime.datetime
+    ) -> bool:
+        # Determine whether the Lease has expired.
+        return now > self._expiry_time(lease)
 
     def _create_lease(
         self,
