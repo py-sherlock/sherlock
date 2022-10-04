@@ -677,7 +677,7 @@ class MCLock(BaseLock):
         if self.expire is not None:
             _args.append(self.expire)
         # Set key only if it does not exist
-        if self.client.add(*tuple(_args)) is True:
+        if self.client.add(*_args) is True:
             self._owner = owner
             return True
         else:
