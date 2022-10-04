@@ -68,6 +68,10 @@ redis = ["redis"]
 etcd = ["python-etcd"]
 memcached = ["pylibmc"]
 
+[tool.isort]
+profile = "black"
+src_paths = ["sherlock", "tests"]
+
 [build-system]
 requires = ["poetry_core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
