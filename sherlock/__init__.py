@@ -232,12 +232,12 @@ import pathlib
 # Import important Lock classes
 from . import lock
 from .lock import (
-    Lock,
-    LockException,
-    LockTimeoutException,
     EtcdLock,
     FileLock,
     KubernetesLock,
+    Lock,
+    LockException,
+    LockTimeoutException,
     MCLock,
     RedisLock,
 )
