@@ -15,22 +15,29 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v4
-        with:
-          python-version: 3.7
+      - name: Install Poetry
+        run: pipx install poetry
 
-      - name: Instal Sherlock
-        run: pip install -e .
-
-      - uses: ricardochaves/python-lint@v1.4.0
+      - name: Setup Python ${{ matrix.py }}
+        uses: actions/setup-python@v4
         with:
-          python-root-list: "sherlock tests"
-          use-pylint: false
-          use-pycodestyle: true
-          use-flake8: true
-          use-black: true
-          use-mypy: true
-          use-isort: true
+          python-version: "3.7"
+          cache: 'poetry'
+
+      - name: Install linting tools
+        run: poetry install --only dev
+
+      - name: Run Black
+        run: black --check sherlock tests
+
+      - name: Run iSort
+        run: isort --check sherlock tests
+
+      - name: Run flake8
+        run: flake8 sherlock tests
+
+      - name: Run pycodestyle
+        run: pycodestyle sherlock tests
 
   test:
     name: Test ${{ matrix.py }} - ${{ matrix.os }}
