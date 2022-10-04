@@ -11,6 +11,7 @@ import importlib
 import json
 import pathlib
 import re
+import signal
 import time
 import typing
 import uuid
@@ -1038,6 +1039,10 @@ class FileLock(BaseLock):
         self.client.mkdir(parents=True, exist_ok=True)
 
         self._owner: typing.Optional[str] = None
+        self._data_file = (self.client / self._key_name).with_suffix(".json")
+        self._lock_file = filelock.FileLock(
+            (self.client / self._key_name).with_suffix(".lock")
+        )
 
     @property
     def _key_name(self):
@@ -1060,22 +1065,13 @@ class FileLock(BaseLock):
         expiry_time = datetime.datetime.fromisoformat(data["expiry_time"])
         return now > expiry_time.astimezone(tz=datetime.timezone.utc)
 
-    @property
-    def _lock_file(self) -> pathlib.Path:
-        return (self.client / self._key_name).with_suffix(".lock")
-
-    @property
-    def _data_file(self) -> pathlib.Path:
-        return (self.client / self._key_name).with_suffix(".json")
-
     def _acquire(self) -> bool:
         owner = str(uuid.uuid4())
 
         # Make sure we have unique lock on the file.
-        with filelock.FileLock(str(self._lock_file.absolute())):
+        with self._lock_file:
             if self._data_file.exists():
-                with self._data_file.open("r") as f:
-                    data = json.load(f)
+                data = json.loads(self._data_file.read_text())
 
                 now = self._now()
                 has_expired = self._has_expired(data, now)
@@ -1096,8 +1092,7 @@ class FileLock(BaseLock):
 
             # Write new data back to file.
             self._data_file.touch()
-            with self._data_file.open("w") as f:
-                json.dump(data, f)
+            self._data_file.write_text(json.dumps(data))
 
             # We succeeded in writing to the file so we now hold the lock.
             self._owner = owner
@@ -1107,27 +1102,25 @@ class FileLock(BaseLock):
         if self._owner is None:
             raise LockException("Lock was not set by this process.")
 
-        with filelock.FileLock(str(self._lock_file.absolute())):
-            if self._data_file.exists():
-                with self._data_file.open("r") as f:
-                    data = json.load(f)
+        if self._data_file.exists():
+            with self._lock_file:
+                data = json.loads(self._data_file.read_text())
 
                 if self._owner == data["owner"]:
                     self._data_file.unlink()
 
     @property
     def _locked(self):
-        with filelock.FileLock(str(self._lock_file.absolute())):
-            if self._data_file.exists():
-                with self._data_file.open("r") as f:
-                    data = json.load(f)
-
-                if self._has_expired(data, self._now()):
-                    # File exists but has expired.
-                    return False
-
-                # Lease exists and has not expired.
-                return True
-
+        if not self._data_file.exists():
             # File doesn't exist so can't be locked.
             return False
+
+        with self._lock_file:
+            data = json.loads(self._data_file.read_text())
+
+        if self._has_expired(data, self._now()):
+            # File exists but has expired.
+            return False
+
+        # Lease exists and has not expired.
+        return True
