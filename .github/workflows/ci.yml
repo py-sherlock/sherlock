@@ -28,16 +28,16 @@ jobs:
         run: poetry install --only dev
 
       - name: Run Black
-        run: black --check sherlock tests
+        run: poetry run black --check sherlock tests
 
       - name: Run iSort
-        run: isort --check sherlock tests
+        run: poetry run isort --check sherlock tests
 
       - name: Run flake8
-        run: flake8 sherlock tests
+        run: poetry run flake8 sherlock tests
 
       - name: Run pycodestyle
-        run: pycodestyle sherlock tests
+        run: poetry run pycodestyle sherlock tests
 
   test:
     name: Test ${{ matrix.py }} - ${{ matrix.os }}
