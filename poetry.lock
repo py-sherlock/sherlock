@@ -664,7 +664,7 @@ tox = ">=3.0.0,<5.0"
 type = "git"
 url = "https://github.com/judahrand/tox-docker.git"
 reference = "judah"
-resolved_reference = "da3fd9c19b9272e07dfe78904ca32d8554e95d97"
+resolved_reference = "9f9dd5f3b0adceac1a6c19d60ebba9f1334a92a9"
 
 [[package]]
 name = "tox-gh-actions"
