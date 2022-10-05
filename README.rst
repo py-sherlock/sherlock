@@ -199,17 +199,6 @@ Available `here`_.
 
 .. _here: http://sher-lock.readthedocs.org
 
-Roadmap
--------
-
-* Support for `Zookeeper`_ as backend.
-* Support for `Gevent`_, `Multithreading`_ and `Multiprocessing`_.
-
-.. _Zookeeper: http://zookeeper.apache.org/
-.. _Gevent: http://www.gevent.org/
-.. _Multithreading: http://docs.python.org/2/library/multithreading.html
-.. _Multiprocessing: http://docs.python.org/2/library/multiprocessing.html
-
 License
 -------
 
