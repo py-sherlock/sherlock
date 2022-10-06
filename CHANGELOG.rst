@@ -11,12 +11,12 @@ Development Version
 
 * [FEAT] Add `KubernetesLock` backend
 * [FEAT] Add `FileLock` backend
-* [FEAT] Install backend specific dependencies with extras #59_
-* [FEAT] Add `.renew()` method to all backends #61_
+* [FEAT] Install backend specific dependencies with extras `#59`_
+* [FEAT] Add `.renew()` method to all backends `#61`_
 
-* [BUGFIX] Use `ARGV` in Redis Lua scripts to add RedisCluster compatibility #31_
-* [BUGFIX] `redis>=2.10.6` client won't work with `sherlock 0.3.1` #32_
-* [BUGFIX] `timeout=0` doesn't work as expected with `RedisLock` #60_
+* [BUGFIX] Use `ARGV` in Redis Lua scripts to add RedisCluster compatibility `#31`_
+* [BUGFIX] `redis>=2.10.6` client won't work with `sherlock 0.3.1` `#32`_
+* [BUGFIX] `timeout=0` doesn't work as expected with `RedisLock` `#60`_
 
 .. _#31: https://github.com/vaidik/sherlock/issues/31
 .. _#32: https://github.com/vaidik/sherlock/issues/32
@@ -27,7 +27,7 @@ Development Version
 0.3.2
 *****
 
-* [BUGFIX] `redis>=2.10.6` client won't work with `sherlock 0.3.1` #32_
+* [BUGFIX] `redis>=2.10.6` client won't work with `sherlock 0.3.1` `#32`_
 
 .. _#32: https://github.com/vaidik/sherlock/issues/32
 
