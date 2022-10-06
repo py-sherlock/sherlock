@@ -1,42 +1,59 @@
+.. role:: python(code)
+   :language: python
+
 CHANGELOG
----------
+#########
 
 Development Version
-+++++++++++++++++++
+*******************
 
 0.4.0
 *****
 
-* [BREAKING] Drop support for `python<3.7`
+Breaking Changes
+================
 
-* [FEAT] Add `KubernetesLock` backend
-* [FEAT] Add `FileLock` backend
-* [FEAT] Install backend specific dependencies with extras `#59`_
-* [FEAT] Add `.renew()` method to all backends `#61`_
+* Drop support for :python:`python<3.7`
 
-* [BUGFIX] Use `ARGV` in Redis Lua scripts to add RedisCluster compatibility `#31`_
-* [BUGFIX] `redis>=2.10.6` client won't work with `sherlock 0.3.1` `#32`_
-* [BUGFIX] `timeout=0` doesn't work as expected with `RedisLock` `#60`_
+New Features
+============
+* Add :python:`KubernetesLock` backend
+* Add :python:`FileLock` backend
+* Install backend specific dependencies with extras `#59`_
+* Add python`.renew()` method to all backends `#61`_
+
+.. _#59: https://github.com/py-sherlock/sherlock/pull/59
+.. _#61: https://github.com/py-sherlock/sherlock/pull/61
+
+Bug Fixes
+=========
+* Use :python:`ARGV` in Redis Lua scripts to add RedisCluster compatibility `#31`_
+* :python:`redis>=2.10.6` client won't work with :python:`sherlock<=0.3.2` `#32`_
+* :python:`timeout=0` doesn't work as expected with :python:`RedisLock` `#60`_
 
 .. _#31: https://github.com/vaidik/sherlock/issues/31
 .. _#32: https://github.com/vaidik/sherlock/issues/32
-.. _#59: https://github.com/py-sherlock/sherlock/pull/59
 .. _#60: https://github.com/py-sherlock/sherlock/pull/60
-.. _#61: https://github.com/py-sherlock/sherlock/pull/61
 
 0.3.2
 *****
 
-* [BUGFIX] `redis>=2.10.6` client won't work with `sherlock 0.3.1` `#32`_
+Bug Fixes
+=========
+* :python:`redis>=2.10.6` client won't work with :python:`sherlock<=0.3.1` `#32`_
 
 .. _#32: https://github.com/vaidik/sherlock/issues/32
 
 0.3.1
 *****
 
-* [BUGFIX] Python 3 support for `sherlock`
+Bug Fixes
+=========
+* Python 3 support for :python:`sherlock`
 
 0.3.0
 *****
 
-* [BUGFIX] `sherlock.Lock` should use globally configured client object.
+Bug Fixes
+=========
+* :python:`sherlock.Lock` should use globally configured client object.
