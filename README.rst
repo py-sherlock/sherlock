@@ -110,6 +110,9 @@ conform to standard library's ``threading.Lock`` APIs.
     # check if the lock has been acquired or not
     lock.locked() == True
 
+    # attempt to renew the lock
+    lock.renew()
+
     # release the lock
     lock.release()
 
@@ -119,7 +122,7 @@ Support for ``with`` statement
 .. code-block:: python
 
     # using with statement
-    with Lock('my_lock'):
+    with Lock('my_lock') as lock:
         # do something constructive with your locked resource here
         pass
 
