@@ -1212,7 +1212,6 @@ class FileLock(BaseLock):
 
                 if self._owner == data["owner"]:
                     self._data_file.unlink()
-                    pathlib.Path(self._lock_file.lock_file).unlink()
 
     def _renew(self) -> bool:
         if self._owner is None:
