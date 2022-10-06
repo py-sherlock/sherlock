@@ -412,16 +412,16 @@ class RedisLock(BaseLock):
     """
 
     _acquire_script = """
-    local result = redis.call('SETNX', KEYS[1], KEYS[2])
-    if result == 1 and KEYS[3] ~= -1 then
-        redis.call('EXPIRE', KEYS[1], KEYS[3])
+    local result = redis.call('SETNX', KEYS[1], ARGV[1])
+    if result == 1 and ARGV[2] ~= -1 then
+        redis.call('EXPIRE', KEYS[1], ARGV[2])
     end
     return result
     """
 
     _release_script = """
     local result = 0
-    if redis.call('GET', KEYS[1]) == KEYS[2] then
+    if redis.call('GET', KEYS[1]) == ARGV[1] then
         redis.call('DEL', KEYS[1])
         result = 1
     end
@@ -430,9 +430,9 @@ class RedisLock(BaseLock):
 
     _renew_script = """
     local result = 0
-    if redis.call('GET', KEYS[1]) == KEYS[2] then
-        if KEYS[3] ~= -1 then
-            redis.call('EXPIRE', KEYS[1], KEYS[3])
+    if redis.call('GET', KEYS[1]) == ARGV[1] then
+        if ARGV[2] ~= -1 then
+            redis.call('EXPIRE', KEYS[1], ARGV[2])
         else
             redis.call('PERSIST', KEYS[1])
         end
@@ -485,7 +485,7 @@ class RedisLock(BaseLock):
             expire = -1
         else:
             expire = self.expire
-        if self._acquire_func(keys=[self._key_name, owner, expire]) != 1:
+        if self._acquire_func(keys=[self._key_name], args=[owner, expire]) != 1:
             return False
         self._owner = owner
         return True
@@ -494,7 +494,7 @@ class RedisLock(BaseLock):
         if self._owner is None:
             raise LockException("Lock was not set by this process.")
 
-        if self._release_func(keys=[self._key_name, self._owner]) != 1:
+        if self._release_func(keys=[self._key_name], args=[self._owner]) != 1:
             raise LockException(
                 "Lock could not be released because it was "
                 "not acquired by this instance."
@@ -506,7 +506,10 @@ class RedisLock(BaseLock):
         if self._owner is None:
             raise LockException("Lock was not set by this process.")
 
-        if self._release_func(keys=[self._key_name, self._owner, self.expire]) != 1:
+        if (
+            self._release_func(keys=[self._key_name], args=[self._owner, self.expire])
+            != 1
+        ):
             return False
         return True
 
@@ -1209,6 +1212,7 @@ class FileLock(BaseLock):
 
                 if self._owner == data["owner"]:
                     self._data_file.unlink()
+                    pathlib.Path(self._lock_file.lock_file).unlink()
 
     def _renew(self) -> bool:
         if self._owner is None:
