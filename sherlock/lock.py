@@ -507,7 +507,7 @@ class RedisLock(BaseLock):
             raise LockException("Lock was not set by this process.")
 
         if (
-            self._release_func(keys=[self._key_name], args=[self._owner, self.expire])
+            self._renew_func(keys=[self._key_name], args=[self._owner, self.expire])
             != 1
         ):
             return False
