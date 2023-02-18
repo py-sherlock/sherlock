@@ -2,7 +2,7 @@
 
 [tool.poetry]
 name = "sherlock"
-version = "0.4.1a0"
+version = "0.4.1"
 description = "Distributed inter-process locks with a choice of backend"
 license =  "MIT"
 authors = [

@@ -7,6 +7,13 @@ CHANGELOG
 Development Version
 *******************
 
+0.4.1
+*****
+
+Bug Fixes
+=========
+* Fix bug in :python:`RedisLock` where lock would be released when :python:`renew` is called
+
 0.4.0
 *****
 
