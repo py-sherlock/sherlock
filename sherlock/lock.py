@@ -894,7 +894,7 @@ class KubernetesLock(BaseLock):
                 seconds=lease.spec.lease_duration_seconds
             )
         elif lease.spec.lease_duration_seconds is None:
-            expiry_time = datetime.datetime.max
+            expiry_time = datetime.datetime.max.replace(tzinfo=datetime.timezone.utc)
         return expiry_time.astimezone(tz=datetime.timezone.utc)
 
     def _has_expired(
@@ -1157,17 +1157,17 @@ class FileLock(BaseLock):
         return key
 
     def _now(self) -> datetime.datetime:
-        return datetime.datetime.now(tz=datetime.timezone.utc)
+        return datetime.datetime.now()
 
     def _expiry_time(self) -> str:
-        expiry_time = datetime.datetime.max.astimezone(datetime.timezone.utc)
+        expiry_time = datetime.datetime.max
         if self.expire is not None:
             expiry_time = self._now() + datetime.timedelta(seconds=self.expire)
         return expiry_time.isoformat()
 
     def _has_expired(self, data: dict, now: datetime.datetime) -> bool:
         expiry_time = datetime.datetime.fromisoformat(data["expiry_time"])
-        return now > expiry_time.astimezone(tz=datetime.timezone.utc)
+        return now > expiry_time
 
     def _acquire(self) -> bool:
         owner = str(uuid.uuid4())

@@ -710,7 +710,7 @@ class TestFileLock(unittest.TestCase):
         file = self._load_file(self.lock_name)
         self.assertEqual(
             file["expiry_time"],
-            datetime.datetime.max.astimezone(datetime.timezone.utc).isoformat(),
+            datetime.datetime.max.isoformat(),
         )
         self.assertTrue(lock.locked())
 
