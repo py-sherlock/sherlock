@@ -413,8 +413,9 @@ class RedisLock(BaseLock):
 
     _acquire_script = """
     local result = redis.call('SETNX', KEYS[1], ARGV[1])
-    if result == 1 and ARGV[2] ~= -1 then
-        redis.call('EXPIRE', KEYS[1], ARGV[2])
+    local expire = tonumber(ARGV[2])
+    if result == 1 and expire ~= -1 then
+        redis.call('EXPIRE', KEYS[1], expire)
     end
     return result
     """
