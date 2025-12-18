@@ -7,7 +7,7 @@ documentation:
 	@(cd docs; make html)
 
 test:
-	poetry run tox
+	uv run tox
 
 doctest:
 	@(cd docs/source; sphinx-build -b doctest . _build/doctest)

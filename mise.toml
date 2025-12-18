@@ -1,0 +1,12 @@
+[tools]
+"uv" = "latest"
+
+[settings]
+# To work with the .python-version managed by uv
+idiomatic_version_file_enable_tools = ["python"]
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.bootstrap]
+run = ["mise install", "uv sync --locked --all-groups"]
